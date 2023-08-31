@@ -13,6 +13,6 @@ public class SQLSimpleResource {
     private List<SQLSimpleColumn> columns = new ArrayList<>();
     private SQLSimpleIndex index = new SQLSimpleIndex();
     private SQLSimpleProcedure procedure = new SQLSimpleProcedure();
-    private SQLSimpleFunction function = new SQLSimpleFunction();
+    //private SQLSimpleFunction function = new SQLSimpleFunction();
 
 }

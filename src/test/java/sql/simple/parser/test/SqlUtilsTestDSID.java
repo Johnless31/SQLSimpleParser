@@ -5,6 +5,7 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
 import com.alibaba.druid.sql.ast.statement.SQLDDLStatement;
+import com.alibaba.druid.sql.ast.statement.SQLSelectQueryBlock;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -347,6 +348,264 @@ public class SqlUtilsTestDSID {
         /*SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
         DCLDigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());*/
+    }
+
+    @Test
+    public void testAlterTableSQL3() {
+        // com.alibaba.druid.sql.ast.statement.SQLDropIndexStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("ALTER TABLE db.tb DROP COLUMN col1,col2;", DbType.oracle);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+    }
+
+    @Test
+    public void testSelectSQL() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT Tid,Tname FROM Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL1() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT TC.Tid, TC.Tname FROM Teachers AS TC;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL2() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT Tid+100 AS \"新编号\", Tname AS \"身份\" FROM db.Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL3() {
+        //com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT * FROM Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL4() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT 'xxx' AS string, 38 AS number, Tid,Tname FROM Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL5() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT DISTINCT Tid,Tname FROM Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL6() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        // count, sum, avg, max, min
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT MAX(DISTINCT sale_price), MIN(purchase_price) FROM Teachers;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL7() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT  product_type, cnt_product FROM (SELECT product_type, COUNT(*) AS cnt_product FROM Product GROUP BY product_type) AS ProductSum;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL8() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_type, cnt_product\n" +
+                " FROM (SELECT *\n" +
+                " FROM (SELECT product_type, COUNT(*) AS cnt_product\n" +
+                " FROM Product\n" +
+                " GROUP BY product_type) AS ProductSum\n" +
+                " WHERE cnt_product = 4) AS ProductSum2;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL9() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id,\n" +
+                " product_name,\n" +
+                " sale_price,\n" +
+                " (SELECT AVG(sale_price)\n" +
+                " FROM Product) AS avg_price\n" +
+                " FROM Product;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL10() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id, product_name, sale_price\n" +
+                " FROM Product\n" +
+                " WHERE sale_price > (SELECT AVG(sale_price)\n" +
+                " FROM Product);", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL11() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT str1, str2,\n" +
+                " str1 || str2 AS str_concat\n" +
+                " FROM SampleStr;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectSQL12() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_name, sale_price\n" +
+                " FROM Product\n" +
+                " WHERE product_id IN (SELECT product_id\n" +
+                " FROM ShopProduct\n" +
+                " WHERE shop_id = '000C');", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectUnionSQL() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id, product_name\n" +
+                " FROM Product\n" +
+                "UNION\n" +
+                "SELECT product_id, product_name\n" +
+                " FROM Product2;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+    @Test
+    public void testSelectUnionSQL2() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id, product_name\n" +
+                " FROM Product\n" +
+                "UNION ALL\n" +
+                "SELECT product_id, product_name\n" +
+                " FROM Product2;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectUnionSQL3() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id, product_name\n" +
+                " FROM Product\n" +
+                "INTERSECT\n" +
+                "SELECT product_id, product_name\n" +
+                " FROM Product2\n" +
+                "ORDER BY product_id;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectUnionSQL4() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id, product_name\n" +
+                " FROM Product\n" +
+                "EXCEPT\n" +
+                "SELECT product_id, product_name\n" +
+                " FROM Product2\n" +
+                "ORDER BY product_id;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectJoinSQL() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name, " +
+                "P.sale_price\n" +
+                " FROM ShopProduct AS SP INNER JOIN Product AS P \n" +
+                " ON SP.product_id = P.product_id;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectJoinSQL1() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name,\n" +
+                "P.sale_price\n" +
+                " FROM ShopProduct AS SP RIGHT OUTER JOIN Product AS P \n" +
+                " ON SP.product_id = P.product_id;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectJoinSQL2() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name, \n" +
+                "P.sale_price\n" +
+                " FROM Product AS P LEFT OUTER JOIN ShopProduct AS SP \n" +
+                " ON SP.product_id = P.product_id;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectJoinSQL3() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name, \n" +
+                "P.sale_price, IP.inventory_quantity\n" +
+                " FROM ShopProduct AS SP INNER JOIN Product AS P\n" +
+                " ON SP.product_id = P.product_id\n" +
+                " INNER JOIN InventoryProduct AS IP\n" +
+                " ON SP.product_id = IP.product_id\n" +
+                " WHERE IP.inventory_id = 'P001';", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+    }
+
+    @Test
+    public void testSelectJoinSQL4() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name\n" +
+                " FROM ShopProduct AS SP CROSS JOIN Product AS P;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
+        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
     }
 
     @Test
