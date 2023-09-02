@@ -58,54 +58,54 @@ public class StatementDigest {
                     DigestHandler.SQLRevokeHandler (sqlSimpleStatement, statement);
                     break;
                 }
-                case 13: {
+                case 1001: {
                     DigestHandler.SQLCreateDatabaseHandler (sqlSimpleStatement, statement);
                     break;
                 }
-                case 14:
-                case 15:
-                case 16: {
+                case 1002:
+                case 1003:
+                case 1004: {
                     DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 17:
-                case 18: {
+                case 1005:
+                case 1006: {
                     DigestHandler.SQLCreateIndexHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 19: {
+                case 1007: {
                     DigestHandler.SQLCreateViewHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 20: {
+                case 1008: {
                     DigestHandler.SQLCreateProcedureHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 21: {
+                case 1009: {
                     DigestHandler.SQLDropDatabaseHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 22: {
+                case 1010: {
                     DigestHandler.SQLDropTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 23: {
+                case 1011: {
                     DigestHandler.SQLDropViewHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 24: {
+                case 1012: {
                     DigestHandler.SQLDropIndexHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 25: {
+                case 1013: {
                     DigestHandler.SQLAlterTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 26: {
+                case 1014: {
                     DigestHandler.SQLAlterDatabaseHandler(sqlSimpleStatement, statement);
                     break;
                 }
-                case 27: {
+                case 3001: {
                     DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, statement);
                     break;
                 }

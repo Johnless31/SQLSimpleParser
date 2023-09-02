@@ -23,27 +23,25 @@ public class StaticObjMap {
         statementMap.put("SQLSetStatement", 10);
         statementMap.put("SQLGrantStatement", 11);
         statementMap.put("SQLRevokeStatement",12);
-        statementMap.put("SQLCreateDatabaseStatement",13);
-        statementMap.put("SQLCreateTableStatement",14);
-        statementMap.put("MySqlCreateTableStatement",15);
-        statementMap.put("OracleCreateTableStatement",16);
-        statementMap.put("SQLCreateIndexStatement",17);
-        statementMap.put("OracleCreateIndexStatement",18);
-        statementMap.put("SQLCreateViewStatement",19);
-        statementMap.put("SQLCreateProcedureStatement", 20);
-        statementMap.put("SQLDropDatabaseStatement", 21);
-        statementMap.put("SQLDropTableStatement", 22);
-        statementMap.put("SQLDropViewStatement", 23);
-        statementMap.put("SQLDropIndexStatement", 24);
-        statementMap.put("SQLAlterTableStatement",25);
-        statementMap.put("SQLAlterDatabaseStatement",26);
-        statementMap.put("SQLSelectStatement",27);
-
-
 
         // DDL Statement 1001~3000
+        statementMap.put("SQLCreateDatabaseStatement",1001);
+        statementMap.put("SQLCreateTableStatement",1002);
+        statementMap.put("MySqlCreateTableStatement",1003);
+        statementMap.put("OracleCreateTableStatement",1004);
+        statementMap.put("SQLCreateIndexStatement",1005);
+        statementMap.put("OracleCreateIndexStatement",1006);
+        statementMap.put("SQLCreateViewStatement",1007);
+        statementMap.put("SQLCreateProcedureStatement", 1008);
+        statementMap.put("SQLDropDatabaseStatement", 1009);
+        statementMap.put("SQLDropTableStatement", 1010);
+        statementMap.put("SQLDropViewStatement", 1011);
+        statementMap.put("SQLDropIndexStatement", 1012);
+        statementMap.put("SQLAlterTableStatement",1013);
+        statementMap.put("SQLAlterDatabaseStatement",1014);
 
-        // DML Statement 30001~Max
+        // DML Statement 3001~Max
+        statementMap.put("SQLSelectStatement",3001);
     }
 
     public static Map<String, AlterInstructionType> alterItemMap = new HashMap<>();
