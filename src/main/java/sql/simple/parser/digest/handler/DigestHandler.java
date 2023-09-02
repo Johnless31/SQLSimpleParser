@@ -19,10 +19,7 @@ import sql.simple.parser.digest.enums.StatementInsMap;
 import sql.simple.parser.digest.res.*;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.enums.InstructionType;
-import sql.simple.parser.digest.simpleBO.SimpleAttributeBO;
-import sql.simple.parser.digest.simpleBO.SimpleCreateViewBO;
-import sql.simple.parser.digest.simpleBO.SimpleResourceBO;
-import sql.simple.parser.digest.simpleBO.SimpleSelectBO;
+import sql.simple.parser.digest.simpleBO.*;
 import sql.simple.parser.digest.common.vlo.ColumnDefVLO;
 
 import java.util.ArrayList;
@@ -33,36 +30,6 @@ import java.util.Map;
 @Slf4j
 public class DigestHandler {
 
-
-    private static void extraDBTBLFromSQLExprTableSource(SQLSimpleStatement sqlSimpleStatement, SQLExprTableSource table) {
-        if (table.getExpr() instanceof SQLPropertyExpr tableProper) {
-            sqlSimpleStatement.getResource().getDatabase().setName(tableProper.getOwnerName());
-            sqlSimpleStatement.getResource().getTableView().setName(tableProper.getName());
-        } else if (table.getExpr() instanceof SQLIdentifierExpr identifierExpr) {
-            sqlSimpleStatement.getResource().getTableView().setName(identifierExpr.getName());
-        }
-    }
-
-    private static void extraDBTBLFromSQLExprTableSource(SQLSimpleDatabase sqlSimpleDatabase, SQLSimpleTableView sqlSimpleTableView, SQLExprTableSource table) {
-        if (table.getExpr() instanceof SQLPropertyExpr tableProper) {
-            sqlSimpleDatabase.setName(tableProper.getOwnerName());
-            sqlSimpleTableView.setName(tableProper.getName());
-        } else if (table.getExpr() instanceof SQLIdentifierExpr identifierExpr) {
-            sqlSimpleTableView.setName(identifierExpr.getName());
-        }
-    }
-
-    private static void extraTBLIndexFromIndexNameExpr(SQLSimpleResource resource, SQLName sqlName, SQLExprTableSource tableSource) {
-        if (sqlName instanceof SQLIdentifierExpr identifierExpr) {
-            resource.getIndex().setName(identifierExpr.getName());
-        } else if (sqlName instanceof SQLPropertyExpr propertyExpr) {
-            resource.getTableView().setName(propertyExpr.getOwnerName());
-            resource.getIndex().setName(propertyExpr.getName());
-        }
-        if (tableSource != null) {
-            extraDBTBLFromSQLExprTableSource(resource.getDatabase(), resource.getTableView(), tableSource);
-        }
-    }
     public static void SQLCommitHandler (SQLSimpleStatement sqlSimpleStatement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.COMMIT);
     }
@@ -242,16 +209,17 @@ public class DigestHandler {
     public static void SQLDropDatabaseHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.DROP_DATABASE);
         SQLDropDatabaseStatement realStatement = (SQLDropDatabaseStatement) statement;
-        sqlSimpleStatement.getResource().getDatabase().setName(realStatement.getDatabaseName());
+        sqlSimpleStatement.getSimpleResourceBO().setDatabase(realStatement.getDatabaseName());
     }
 
     public static void SQLDropTableHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.DROP_TABLE);
         SQLDropTableStatement realStatement = (SQLDropTableStatement) statement;
         for (SQLExprTableSource tableSource: realStatement.getTableSources()) {
-            SQLSimpleDBTBLCOL dbtblcol = new SQLSimpleDBTBLCOL();
-            extraDBTBLFromSQLExprTableSource(dbtblcol.getDatabase(), dbtblcol.getTableView(), tableSource);
-            sqlSimpleStatement.getRefMultiRes().add(dbtblcol);
+            SimpleResourceBO resourceBO = new SimpleResourceBO();
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
+            resourceBO.transTableVLO(tableVLO);
+            sqlSimpleStatement.getSimpleDropTableViewBO().add(resourceBO);
         }
     }
 
@@ -259,28 +227,45 @@ public class DigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.DROP_VIEW);
         SQLDropViewStatement realStatement = (SQLDropViewStatement) statement;
         for (SQLExprTableSource tableSource: realStatement.getTableSources()) {
-            SQLSimpleDBTBLCOL dbTblCol = new SQLSimpleDBTBLCOL();
-            extraDBTBLFromSQLExprTableSource(dbTblCol.getDatabase(), dbTblCol.getTableView(), tableSource);
-            sqlSimpleStatement.getRefMultiRes().add(dbTblCol);
+            SimpleResourceBO resourceBO = new SimpleResourceBO();
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
+            resourceBO.transTableVLO(tableVLO);
+            sqlSimpleStatement.getSimpleDropTableViewBO().add(resourceBO);
         }
     }
 
     public static void SQLDropIndexHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.DROP_INDEX);
         SQLDropIndexStatement realStatement = (SQLDropIndexStatement) statement;
-        extraTBLIndexFromIndexNameExpr(sqlSimpleStatement.getResource(), realStatement.getIndexName(), realStatement.getTableName());
+        List<SQLExprVLO> exprVLOList = new ArrayList<>();
+        ExtraUtils.extraExprVLOFromSQLExpr(exprVLOList, realStatement.getIndexName());
+        if (!exprVLOList.isEmpty()) {
+            SQLExprVLO exprVLO = exprVLOList.get(0);
+            sqlSimpleStatement.getSimpleResourceBO().getIndex().setName(exprVLO.getName());
+            sqlSimpleStatement.getSimpleResourceBO().setTableView(exprVLO.getOwner());
+        }
+        if (realStatement.getTableName() != null) {
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(realStatement.getTableName());
+            sqlSimpleStatement.getSimpleResourceBO().transTableVLO(tableVLO);
+        }
+    }
+
+    public static void SQLAlterDatabaseHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.ALTER_DATABASE);
+        SQLAlterDatabaseStatement realStatement = (SQLAlterDatabaseStatement) statement;
+        sqlSimpleStatement.getSimpleResourceBO().setDatabase(realStatement.getName().getSimpleName());
     }
 
     public static void SQLAlterTableHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.ALTER_TABLE);
         SQLAlterTableStatement realStatement = (SQLAlterTableStatement) statement;
-        extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, realStatement.getTableSource());
+        SimpleAlterBO simpleAlterBO = sqlSimpleStatement.getSimpleAlterBO();
+        TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(realStatement.getTableSource());
+        simpleAlterBO.transTableVLO(tableVLO);
         for (SQLAlterTableItem alterTableItem: realStatement.getItems()) {
             String insName = alterTableItem.getClass().getSimpleName();
             if (StatementInsMap.alterItemMap.containsKey(insName)) {
-                SQLSimpleDBTBLCOL sqlSimpleDBTBLCOL = new SQLSimpleDBTBLCOL();
-                sqlSimpleDBTBLCOL.setSubInstructionType(StatementInsMap.alterItemMap.get(insName));
-                sqlSimpleStatement.getRefMultiRes().add(sqlSimpleDBTBLCOL);
+                simpleAlterBO.getAlterInstructionList().add(StatementInsMap.alterItemMap.get(insName));
             }
         }
     }

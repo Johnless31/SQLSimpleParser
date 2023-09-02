@@ -18,9 +18,7 @@ public enum InstructionType {
     DROP_TABLE,
     DROP_VIEW,
     DROP_INDEX,
+    ALTER_DATABASE,
     ALTER_TABLE,
     SELECT,
-    SELECT_SUB_QUERY,
-    SELECT_UNION,
-    SELECT_JOIN
 }

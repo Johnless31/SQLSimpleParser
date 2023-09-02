@@ -149,15 +149,7 @@ public class ExtraUtils {
             for (SQLExpr arg: aggregateExpr.getArguments()) {
                 extraExprVLOFromSQLExpr(exprVLOList, arg);
             }
-        }/* else if (sqlExpr instanceof SQLQueryExpr sqlQueryExpr) {
-            if (sqlQueryExpr.getSubQuery()!= null &&
-                    sqlQueryExpr.getSubQuery().getQuery() != null &&
-                    sqlQueryExpr.getSubQuery().getQuery() instanceof SQLSelectQueryBlock selectQueryBlock) {
-                for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
-                    extraExprVLOFromSQLExpr(exprVLOList, item.getExpr());
-                }
-            }
-        }*/
+        }
     }
 
     public static List<TableVLO> extraTableVloListFromSQLJoinTableSource(SQLJoinTableSource joinTableSource) {

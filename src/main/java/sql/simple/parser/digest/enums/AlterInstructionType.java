@@ -1,6 +1,6 @@
 package sql.simple.parser.digest.enums;
 
-public enum SubInstructionType {
+public enum AlterInstructionType {
     UNKNOWN,
     ADD_CLUSTERING_KEY,
     ADD_COLUMN,

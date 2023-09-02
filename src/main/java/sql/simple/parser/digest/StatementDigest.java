@@ -101,6 +101,14 @@ public class StatementDigest {
                     DigestHandler.SQLAlterTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
+                case 26: {
+                    DigestHandler.SQLAlterDatabaseHandler(sqlSimpleStatement, statement);
+                    break;
+                }
+                case 27: {
+                    DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, statement);
+                    break;
+                }
                 default: break;
             }
         }

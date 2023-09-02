@@ -309,6 +309,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLCreateProcedureStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("CREATE PROCEDURE GetScoreByStu (IN name VARCHAR(30)) BEGIN SELECT student_score FROM tb_students_score WHERE student_name=name; END;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateProcedureHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
@@ -322,7 +325,9 @@ public class SqlUtilsTestDSID {
                 "AS " + "BEGIN INSERT INTO STUDENT VALUES(SID, SNAME); " +
                 "END SP_STUDENT;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        log.info("解析sql:{}", sqlStatement.getClass().getSimpleName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateProcedureHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
@@ -330,6 +335,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLDropDatabaseStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("drop database if exists test;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLDropDatabaseHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
@@ -347,7 +355,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLDropViewStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("drop view if exists db.test, tt.test;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLDropViewHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
@@ -372,9 +382,12 @@ public class SqlUtilsTestDSID {
 
     @Test
     public void testAlterDatabaseSQL() {
-        // com.alibaba.druid.sql.ast.statement.SQLDropIndexStatement
+        // com.alibaba.druid.sql.ast.statement.SQLAlterDatabaseStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("alter database `testdb` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLAlterDatabaseHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
@@ -390,9 +403,9 @@ public class SqlUtilsTestDSID {
                 "ORDER BY col7 ASC, " +
                 "DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        /*SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
-        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());*/
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLAlterTableHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
     @Test
