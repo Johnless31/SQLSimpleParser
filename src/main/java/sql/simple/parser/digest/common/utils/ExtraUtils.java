@@ -1,113 +1,68 @@
 package sql.simple.parser.digest.common.utils;
 
 import com.alibaba.druid.sql.ast.SQLExpr;
-import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlUserName;
+import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import sql.simple.parser.digest.SQLSimpleStatement;
-import sql.simple.parser.digest.common.vlo.ColumnVLO;
-import sql.simple.parser.digest.common.vlo.SQLExprVLO;
-import sql.simple.parser.digest.res.*;
-import sql.simple.parser.digest.common.vlo.TableVLO;
+import sql.simple.parser.digest.common.vlo.*;
+import sql.simple.parser.digest.common.vlo.ColumnDefVLO;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class ExtraUtils {
 
-
-    public static void extraDBTBLFromSQLExprTableSource(SQLSimpleStatement sqlSimpleStatement, SQLExprTableSource table) {
-        if (table.getExpr() instanceof SQLPropertyExpr tableProper) {
-            sqlSimpleStatement.getResource().getDatabase().setName(tableProper.getOwnerName());
-            sqlSimpleStatement.getResource().getTableView().setName(tableProper.getName());
-        } else if (table.getExpr() instanceof SQLIdentifierExpr identifierExpr) {
-            sqlSimpleStatement.getResource().getTableView().setName(identifierExpr.getName());
-        }
-    }
-
-    public static void extraDBTBLFromSQLExprTableSource(SQLSimpleDatabase sqlSimpleDatabase, SQLSimpleTableView sqlSimpleTableView, SQLExprTableSource table) {
-        if (table.getExpr() instanceof SQLPropertyExpr tableProper) {
-            sqlSimpleDatabase.setName(tableProper.getOwnerName());
-            sqlSimpleTableView.setName(tableProper.getName());
-        } else if (table.getExpr() instanceof SQLIdentifierExpr identifierExpr) {
-            sqlSimpleTableView.setName(identifierExpr.getName());
-        }
-    }
-
-    public static void extraPriFromPrivilegeItems (SQLSimpleStatement sqlSimpleStatement, List<SQLPrivilegeItem> privilegeItems, boolean withGrantOption) {
+    public static List<PrivilegeVLO> extraPrivilegeVLOFromPrivilegeItemList(List<SQLPrivilegeItem> privilegeItems) {
+        List<PrivilegeVLO> privilegeVLOList = new ArrayList<>();
         for (SQLPrivilegeItem item : privilegeItems) {
-            SimplePrivilege simplePrivilege = new SimplePrivilege();
             if (item.getAction() instanceof SQLIdentifierExpr action) {
-                SQLSimplePrivilegeAction priAction = new SQLSimplePrivilegeAction();
-                priAction.setAction(action.getName());
+                PrivilegeVLO privilegeVLO = new PrivilegeVLO();
+                privilegeVLO.setAction(action.getName());
                 for (SQLName col: item.getColumns()) {
-                    priAction.getColumns().add(col.getSimpleName());
+                    privilegeVLO.getClumns().add(col.getSimpleName());
                 }
-                simplePrivilege.getActions().add(priAction);
+                privilegeVLOList.add(privilegeVLO);
             }
-            sqlSimpleStatement.getPrivilege().getSimplePrivileges().add(simplePrivilege);
         }
-        if (withGrantOption) {
-            sqlSimpleStatement.getPrivilege().setWithGrantOption(true);
-        }
+        return privilegeVLOList;
     }
 
-    public static void extraUserFromSQLUser (SQLSimpleStatement sqlSimpleStatement, SQLExpr sqlUser, SQLExpr identifiedBy) {
-        if (sqlUser instanceof SQLIdentifierExpr user) {
-            sqlSimpleStatement.getUser().setUsername(user.getName());
-        } else if (sqlUser instanceof MySqlUserName user) {
-            sqlSimpleStatement.getUser().setUsername(user.getUserName());
-            sqlSimpleStatement.getUser().setHost(user.getHost());
-            sqlSimpleStatement.getUser().setIdentifyBy(user.getIdentifiedBy());
+    public static List<UserVLO> extraUsersFromSQLExprList (List<SQLExpr> sqlExprList) {
+        List<UserVLO> UserVLOList = new ArrayList<>();
+        for (SQLExpr sqlUser: sqlExprList) {
+            UserVLO userVLO = new UserVLO();
+            if (sqlUser instanceof SQLIdentifierExpr user) {
+                userVLO.setUsername(user.getName());
+            } else if (sqlUser instanceof MySqlUserName user) {
+                userVLO.setUsername(user.getUserName());
+                userVLO.setHost(user.getHost());
+            } else if (sqlUser instanceof SQLCharExpr user) {
+                userVLO.setUsername(user.getText());
+            }
+            if (!StringUtils.isEmpty(userVLO.getUsername())) {
+                UserVLOList.add(userVLO);
+            }
         }
-        if (identifiedBy instanceof SQLCharExpr charIdentified && !charIdentified.getText().isEmpty()) {
-            sqlSimpleStatement.getUser().setIdentifyBy(charIdentified.getText());
-        }
+        return UserVLOList;
     }
 
-    public static void extraColumnFromColumnDef(SQLSimpleColumn simpleColumn, SQLColumnDefinition columnDef) {
-        simpleColumn.setName(columnDef.getColumnName());
+    public static ColumnDefVLO extraColumnFromColumnDef(SQLColumnDefinition columnDef) {
+        ColumnDefVLO simpleColumnBO = new ColumnDefVLO();
+        simpleColumnBO.setName(columnDef.getColumnName());
         if (columnDef.getDataType() != null) {
-            simpleColumn.setType(columnDef.getDataType().toString());
+            simpleColumnBO.setType(columnDef.getDataType().toString());
         }
         for (SQLColumnConstraint constraint: columnDef.getConstraints()) {
-            simpleColumn.getConstrains().add(constraint.toString());
+            simpleColumnBO.getConstrains().add(constraint.toString());
         }
         if (columnDef.getDefaultExpr() != null)
-            simpleColumn.setDefaultVal(columnDef.getDefaultExpr().toString());
+            simpleColumnBO.setDefaultVal(columnDef.getDefaultExpr().toString());
+        return simpleColumnBO;
     }
-
-    public static void extraResFromIndexDef(SQLSimpleStatement sqlSimpleStatement, SQLIndexDefinition indexDefinition) {
-        sqlSimpleStatement.getResource().getIndex().setName(indexDefinition.getName().getSimpleName());
-        sqlSimpleStatement.getResource().getIndex().setType(indexDefinition.getType());
-        if (indexDefinition.getTable() instanceof SQLExprTableSource tableSource) {
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, tableSource);
-        }
-        for (SQLSelectOrderByItem item: indexDefinition.getColumns()) {
-            SQLSimpleColumn column = new SQLSimpleColumn();
-            column.setName(item.toString());
-            sqlSimpleStatement.getResource().getColumns().add(column);
-        }
-
-    }
-
-    public static void extraTBLIndexFromIndexNameExpr(SQLSimpleResource resource, SQLName sqlName, SQLExprTableSource tableSource) {
-        if (sqlName instanceof SQLIdentifierExpr identifierExpr) {
-            resource.getIndex().setName(identifierExpr.getName());
-        } else if (sqlName instanceof SQLPropertyExpr propertyExpr) {
-            resource.getTableView().setName(propertyExpr.getOwnerName());
-            resource.getIndex().setName(propertyExpr.getName());
-        }
-        if (tableSource != null) {
-            extraDBTBLFromSQLExprTableSource(resource.getDatabase(), resource.getTableView(), tableSource);
-        }
-    }
-
     public static TableVLO extraTableVLOFromExprTableSource(SQLExprTableSource table) {
         TableVLO dbTblVLO = new TableVLO();
         if (table.getExpr() instanceof SQLPropertyExpr tableProper) {
@@ -118,6 +73,27 @@ public class ExtraUtils {
         }
         dbTblVLO.setAlias(table.getAlias());
         return dbTblVLO;
+    }
+
+    public static List<ColumnDefVLO> extraColumnDefVLOFromSQLTableElementList(List<SQLTableElement> tableElementList) {
+        List<ColumnDefVLO> columnVLOList = new ArrayList<>();
+        List<String> tbConstrains = new ArrayList<>();
+        for (SQLTableElement tableElement: tableElementList) {
+            if (tableElement instanceof SQLColumnDefinition columnDefinition) { // 列的定义表达式
+                ColumnDefVLO column = ExtraUtils.extraColumnFromColumnDef(columnDefinition);
+                columnVLOList.add(column);
+            } else { // 约束表达式
+                tbConstrains.add(tableElement.toString());
+            }
+        }
+        for (String tbCons : tbConstrains) {
+            for (ColumnDefVLO column : columnVLOList) {
+                if (tbCons.contains(column.getName())) {
+                    column.getConstrains().add(tbCons);
+                }
+            }
+        }
+        return columnVLOList;
     }
 
     /**

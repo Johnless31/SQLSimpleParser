@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.StatementDigest;
 import sql.simple.parser.digest.handler.DigestHandler;
+import sql.simple.parser.digest.simpleBO.SimpleGrantBO;
+import sql.simple.parser.digest.simpleBO.SimpleResourceBO;
+import sql.simple.parser.digest.simpleBO.SimpleSelectBO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,6 +129,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLGrantStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("grant alter,select(user_id, username),insert on testdb.* to 'john'@'%' with grant option;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLGrantHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -133,6 +141,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLGrantStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("grant select(user_id,username), update(username) on smp.users to mo_user@'%' identified by '123345';", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLGrantHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -140,6 +153,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLGrantStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("grant create temporary tables on testdb.* to developer@'192.168.0.%';", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLGrantHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -147,6 +165,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLGrantStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("grant select(user_id, username),insert on student to john identified by '123345' with grant option;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLGrantHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -154,6 +177,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLRevokeStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("revoke select(user_id, username), insert on db.tb from 'userA'@'1.1.1.1';", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLRevokeHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -161,6 +189,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLRevokeStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("revoke select(user_id, username), insert on db.tb from 'userA';", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLRevokeHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleGrantBO simpleGrantBO = sqlSimpleStatement.getSimpleGrantBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -168,6 +201,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLCreateDatabaseStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("create database test;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateDatabaseHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleResourceBO simpleGrantBO = sqlSimpleStatement.getSimpleResourceBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -175,6 +213,11 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLCreateDatabaseStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("CREATE DATABASE if not exists test;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateDatabaseHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+        SimpleResourceBO simpleGrantBO = sqlSimpleStatement.getSimpleResourceBO();
+        log.info("解析sql:{}", simpleGrantBO);
     }
 
     @Test
@@ -191,8 +234,10 @@ public class SqlUtilsTestDSID {
                 "U_ID int(3) REFERENCES tb_user(id)" +
                 ");", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getSimpleResourceBO());
 
-        log.info("解析sql:{}", sqlStatement.getClass().getName());
     }
 
     @Test
@@ -213,7 +258,7 @@ public class SqlUtilsTestDSID {
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
         DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
-        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
+        log.info("解析sql:{}", sqlSimpleStatement.getSimpleResourceBO());
     }
 
     @Test
@@ -235,7 +280,7 @@ public class SqlUtilsTestDSID {
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
         DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
-        log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
+        log.info("解析sql:{}", sqlSimpleStatement.getSimpleResourceBO());
     }
 
     @Test

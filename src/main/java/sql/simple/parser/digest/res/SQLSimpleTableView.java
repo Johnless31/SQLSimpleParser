@@ -5,8 +5,5 @@ import sql.simple.parser.digest.SQLSimpleStatement;
 
 @Data
 public class SQLSimpleTableView {
-
     private String name;
-    private SQLSimpleStatement source;
-
 }

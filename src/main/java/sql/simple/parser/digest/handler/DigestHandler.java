@@ -1,15 +1,12 @@
 package sql.simple.parser.digest.handler;
 
-import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
 import com.alibaba.druid.sql.ast.expr.SQLQueryExpr;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlUserName;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.sqlserver.ast.stmt.SQLServerRollbackStatement;
@@ -17,15 +14,16 @@ import com.alibaba.druid.sql.dialect.sqlserver.ast.stmt.SQLServerSetTransactionI
 import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import sql.simple.parser.digest.common.utils.ExtraUtils;
-import sql.simple.parser.digest.common.vlo.ColumnVLO;
-import sql.simple.parser.digest.common.vlo.DbTblVLO;
-import sql.simple.parser.digest.common.vlo.SQLExprVLO;
+import sql.simple.parser.digest.common.vlo.*;
 import sql.simple.parser.digest.enums.StatementInsMap;
 import sql.simple.parser.digest.res.*;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.enums.InstructionType;
-import sql.simple.parser.digest.common.vlo.TableVLO;
+import sql.simple.parser.digest.simpleBO.SimpleAttributeBO;
+import sql.simple.parser.digest.simpleBO.SimpleCreateViewBO;
+import sql.simple.parser.digest.simpleBO.SimpleResourceBO;
 import sql.simple.parser.digest.simpleBO.SimpleSelectBO;
+import sql.simple.parser.digest.common.vlo.ColumnDefVLO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,63 +52,6 @@ public class DigestHandler {
         }
     }
 
-    private static void extraPriFromPrivilegeItems (SQLSimpleStatement sqlSimpleStatement, List<SQLPrivilegeItem> privilegeItems, boolean withGrantOption) {
-        for (SQLPrivilegeItem item : privilegeItems) {
-            SimplePrivilege simplePrivilege = new SimplePrivilege();
-            if (item.getAction() instanceof SQLIdentifierExpr action) {
-                SQLSimplePrivilegeAction priAction = new SQLSimplePrivilegeAction();
-                priAction.setAction(action.getName());
-                for (SQLName col: item.getColumns()) {
-                    priAction.getColumns().add(col.getSimpleName());
-                }
-                simplePrivilege.getActions().add(priAction);
-            }
-            sqlSimpleStatement.getPrivilege().getSimplePrivileges().add(simplePrivilege);
-        }
-        if (withGrantOption) {
-            sqlSimpleStatement.getPrivilege().setWithGrantOption(true);
-        }
-    }
-
-    private static void extraUserFromSQLUser (SQLSimpleStatement sqlSimpleStatement, SQLExpr sqlUser, SQLExpr identifiedBy) {
-        if (sqlUser instanceof SQLIdentifierExpr user) {
-            sqlSimpleStatement.getUser().setUsername(user.getName());
-        } else if (sqlUser instanceof MySqlUserName user) {
-            sqlSimpleStatement.getUser().setUsername(user.getUserName());
-            sqlSimpleStatement.getUser().setHost(user.getHost());
-            sqlSimpleStatement.getUser().setIdentifyBy(user.getIdentifiedBy());
-        }
-        if (identifiedBy instanceof SQLCharExpr charIdentified && !charIdentified.getText().isEmpty()) {
-            sqlSimpleStatement.getUser().setIdentifyBy(charIdentified.getText());
-        }
-    }
-
-    private static void extraColumnFromColumnDef(SQLSimpleColumn simpleColumn, SQLColumnDefinition columnDef) {
-        simpleColumn.setName(columnDef.getColumnName());
-        if (columnDef.getDataType() != null) {
-            simpleColumn.setType(columnDef.getDataType().toString());
-        }
-        for (SQLColumnConstraint constraint: columnDef.getConstraints()) {
-            simpleColumn.getConstrains().add(constraint.toString());
-        }
-        if (columnDef.getDefaultExpr() != null)
-            simpleColumn.setDefaultVal(columnDef.getDefaultExpr().toString());
-    }
-
-    private static void extraResFromIndexDef(SQLSimpleStatement sqlSimpleStatement, SQLIndexDefinition indexDefinition) {
-        sqlSimpleStatement.getResource().getIndex().setName(indexDefinition.getName().getSimpleName());
-        sqlSimpleStatement.getResource().getIndex().setType(indexDefinition.getType());
-        if (indexDefinition.getTable() instanceof SQLExprTableSource tableSource) {
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, tableSource);
-        }
-        for (SQLSelectOrderByItem item: indexDefinition.getColumns()) {
-            SQLSimpleColumn column = new SQLSimpleColumn();
-            column.setName(item.toString());
-            sqlSimpleStatement.getResource().getColumns().add(column);
-        }
-
-    }
-
     private static void extraTBLIndexFromIndexNameExpr(SQLSimpleResource resource, SQLName sqlName, SQLExprTableSource tableSource) {
         if (sqlName instanceof SQLIdentifierExpr identifierExpr) {
             resource.getIndex().setName(identifierExpr.getName());
@@ -130,7 +71,7 @@ public class DigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.ROLLBACK);
         try {
             SQLRollbackStatement realStatement = (SQLRollbackStatement) statement;
-            SQLSimpleAttribute attribute = new SQLSimpleAttribute("SAVEPOINT", realStatement.getTo().getSimpleName());
+            SimpleAttributeBO attribute = new SimpleAttributeBO("SAVEPOINT", realStatement.getTo().getSimpleName());
             sqlSimpleStatement.getAttributes().add(attribute);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -143,7 +84,7 @@ public class DigestHandler {
         if (realStatement.getName() != null) {
             if (realStatement.getName() instanceof SQLIdentifierExpr identifierExpr) {
                 try {
-                    SQLSimpleAttribute attribute = new SQLSimpleAttribute("SAVEPOINT", identifierExpr.getName());
+                    SimpleAttributeBO attribute = new SimpleAttributeBO("SAVEPOINT", identifierExpr.getName());
                     sqlSimpleStatement.getAttributes().add(attribute);
                 } catch (Exception e) {
                     log.error(e.getMessage());
@@ -159,14 +100,14 @@ public class DigestHandler {
     public static void MySqlSetTransactionHandler (SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.SET_TRANSACTION);
         MySqlSetTransactionStatement realStatement = (MySqlSetTransactionStatement) statement;
-        SQLSimpleAttribute attribute = new SQLSimpleAttribute("ISOLATION LEVEL", realStatement.getIsolationLevel());
+        SimpleAttributeBO attribute = new SimpleAttributeBO("ISOLATION LEVEL", realStatement.getIsolationLevel());
         sqlSimpleStatement.getAttributes().add(attribute);
     }
 
     public static void SQLServerSetTransactionIsolationLevelHandler (SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.SET_TRANSACTION);
         SQLServerSetTransactionIsolationLevelStatement realStatement = (SQLServerSetTransactionIsolationLevelStatement) statement;
-        SQLSimpleAttribute attribute = new SQLSimpleAttribute("ISOLATION LEVEL", realStatement.getLevel());
+        SimpleAttributeBO attribute = new SimpleAttributeBO("ISOLATION LEVEL", realStatement.getLevel());
         sqlSimpleStatement.getAttributes().add(attribute);
     }
 
@@ -174,10 +115,10 @@ public class DigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.SET_TRANSACTION);
         OracleSetTransactionStatement realStatement = (OracleSetTransactionStatement) statement;
         if (realStatement.isReadOnly()) {
-            SQLSimpleAttribute attribute = new SQLSimpleAttribute("READ ONLY", "TRUE");
+            SimpleAttributeBO attribute = new SimpleAttributeBO("READ ONLY", "TRUE");
             sqlSimpleStatement.getAttributes().add(attribute);
         } else if (realStatement.isWrite()) {
-            SQLSimpleAttribute attribute = new SQLSimpleAttribute("READ WRITE", "TRUE");
+            SimpleAttributeBO attribute = new SimpleAttributeBO("READ WRITE", "TRUE");
             sqlSimpleStatement.getAttributes().add(attribute);
         }
     }
@@ -189,7 +130,7 @@ public class DigestHandler {
         for (SQLAssignItem item : items) {
             if (item.getTarget() instanceof SQLIdentifierExpr target
                     && item.getValue() instanceof SQLIdentifierExpr value) {
-                SQLSimpleAttribute attribute = new SQLSimpleAttribute(target.getName(), value.getName());
+                SimpleAttributeBO attribute = new SimpleAttributeBO(target.getName(), value.getName());
                 sqlSimpleStatement.getAttributes().add(attribute);
             }
         }
@@ -199,10 +140,14 @@ public class DigestHandler {
         SQLGrantStatement realStatement = (SQLGrantStatement) statement;
         try {
             SQLExprTableSource table = (SQLExprTableSource) realStatement.getResource();
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, table);
-            extraPriFromPrivilegeItems (sqlSimpleStatement, realStatement.getPrivileges(), realStatement.getWithGrantOption());
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(table);
+            sqlSimpleStatement.getSimpleGrantBO().transTableVLO(tableVLO);
+            List<PrivilegeVLO> privilegeVLOList = ExtraUtils.extraPrivilegeVLOFromPrivilegeItemList(realStatement.getPrivileges());
+            sqlSimpleStatement.getSimpleGrantBO().setPrivilegeList(privilegeVLOList);
+            sqlSimpleStatement.getSimpleGrantBO().setWithGrantOption(realStatement.getWithGrantOption());
             if (!realStatement.getUsers().isEmpty()) {
-                extraUserFromSQLUser(sqlSimpleStatement, realStatement.getUsers().get(0), realStatement.getIdentifiedBy());
+                List<UserVLO> userVLOList = ExtraUtils.extraUsersFromSQLExprList(realStatement.getUsers());
+                sqlSimpleStatement.getSimpleGrantBO().setUserList(userVLOList);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -214,10 +159,13 @@ public class DigestHandler {
         SQLRevokeStatement realStatement = (SQLRevokeStatement) statement;
         try {
             SQLExprTableSource table = (SQLExprTableSource) realStatement.getResource();
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, table);
-            extraPriFromPrivilegeItems (sqlSimpleStatement, realStatement.getPrivileges(), false);
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(table);
+            sqlSimpleStatement.getSimpleGrantBO().transTableVLO(tableVLO);
+            List<PrivilegeVLO> privilegeVLOList = ExtraUtils.extraPrivilegeVLOFromPrivilegeItemList(realStatement.getPrivileges());
+            sqlSimpleStatement.getSimpleGrantBO().setPrivilegeList(privilegeVLOList);
             if (!realStatement.getUsers().isEmpty()) {
-                extraUserFromSQLUser(sqlSimpleStatement, realStatement.getUsers().get(0), null);
+                List<UserVLO> userVLOList = ExtraUtils.extraUsersFromSQLExprList(realStatement.getUsers());
+                sqlSimpleStatement.getSimpleGrantBO().setUserList(userVLOList);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -229,7 +177,7 @@ public class DigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.CREATE_DATABASE);
         SQLCreateDatabaseStatement realStatement = (SQLCreateDatabaseStatement) statement;
         try {
-            sqlSimpleStatement.getResource().getDatabase().setName(realStatement.getDatabaseName());
+            sqlSimpleStatement.getSimpleResourceBO().setDatabase(realStatement.getDatabaseName());
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -240,24 +188,10 @@ public class DigestHandler {
         SQLCreateTableStatement realStatement = (SQLCreateTableStatement) statement;
         try {
             SQLExprTableSource table = realStatement.getTableSource();
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, table);
-            List<String> tbConstrains = new ArrayList<>();
-            for (SQLTableElement tableElement: realStatement.getTableElementList()) {
-                if (tableElement instanceof SQLColumnDefinition columnDefinition) {
-                    SQLSimpleColumn column = new SQLSimpleColumn();
-                    extraColumnFromColumnDef(column, columnDefinition);
-                    sqlSimpleStatement.getResource().getColumns().add(column);
-                } else {
-                    tbConstrains.add(tableElement.toString());
-                }
-            }
-            for (String tbCons : tbConstrains) {
-                for (SQLSimpleColumn column : sqlSimpleStatement.getResource().getColumns()) {
-                    if (tbCons.contains(column.getName())) {
-                        column.getConstrains().add(tbCons);
-                    }
-                }
-            }
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(table);
+            sqlSimpleStatement.getSimpleResourceBO().transTableVLO(tableVLO);
+            List<ColumnDefVLO> columnDefVLOList = ExtraUtils.extraColumnDefVLOFromSQLTableElementList(realStatement.getTableElementList());
+            sqlSimpleStatement.getSimpleResourceBO().setColumns(columnDefVLOList);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -266,22 +200,36 @@ public class DigestHandler {
     public static void SQLCreateIndexHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.CREATE_INDEX);
         SQLCreateIndexStatement realStatement = (SQLCreateIndexStatement) statement;
-        extraResFromIndexDef(sqlSimpleStatement, realStatement.getIndexDefinition());
+        SQLIndexDefinition indexDefinition = realStatement.getIndexDefinition();
+        SimpleResourceBO simpleResourceBO = sqlSimpleStatement.getSimpleResourceBO();
+        simpleResourceBO.getIndex().setName(indexDefinition.getName().getSimpleName());
+        simpleResourceBO.getIndex().setType(indexDefinition.getType());
+        if (indexDefinition.getTable() instanceof SQLExprTableSource tableSource) {
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
+            simpleResourceBO.transTableVLO(tableVLO);
+        }
+        for (SQLSelectOrderByItem item: indexDefinition.getColumns()) {
+            ColumnDefVLO column = new ColumnDefVLO();
+            column.setName(item.toString());
+            simpleResourceBO.getColumns().add(column);
+        }
     }
 
     public static void SQLCreateViewHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.CREATE_VIEW);
         SQLCreateViewStatement realStatement = (SQLCreateViewStatement) statement;
         try {
+            SimpleCreateViewBO simpleCreateViewBO = sqlSimpleStatement.getSimpleCreateViewBO();
             SQLExprTableSource table = realStatement.getTableSource();
-            extraDBTBLFromSQLExprTableSource(sqlSimpleStatement, table);
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(table);
+            simpleCreateViewBO.transTableVLO(tableVLO);
             for (SQLTableElement tableElement: realStatement.getColumns()) {
                 if (tableElement instanceof SQLColumnDefinition columnDefinition) {
-                    SQLSimpleColumn column = new SQLSimpleColumn();
-                    extraColumnFromColumnDef(column, columnDefinition);
-                    sqlSimpleStatement.getResource().getColumns().add(column);
+                    ColumnDefVLO column = ExtraUtils.extraColumnFromColumnDef(columnDefinition);
+                    simpleCreateViewBO.getColumns().add(column);
                 }
             }
+            SQLSelectQueryHandler(realStatement.getSubQuery().getQuery(), simpleCreateViewBO.getRelatedQuery());
         } catch (Exception e) {
             log.error(e.getMessage());
         }
