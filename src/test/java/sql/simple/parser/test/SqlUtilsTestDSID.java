@@ -3,10 +3,7 @@ package sql.simple.parser.test;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
-import com.alibaba.druid.sql.ast.statement.SQLDDLStatement;
-import com.alibaba.druid.sql.ast.statement.SQLSelectQueryBlock;
-import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
+import com.alibaba.druid.sql.ast.statement.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import sql.simple.parser.digest.SQLSimpleStatement;
@@ -14,7 +11,6 @@ import sql.simple.parser.digest.StatementDigest;
 import sql.simple.parser.digest.handler.DigestHandler;
 import sql.simple.parser.digest.simpleBO.SimpleGrantBO;
 import sql.simple.parser.digest.simpleBO.SimpleResourceBO;
-import sql.simple.parser.digest.simpleBO.SimpleSelectBO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,13 +56,14 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLCommitStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("commit work;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSimpleStatement sstatement = StatementDigest.SQLSimpleStatementParse(sqlStatement);
+        SQLSimpleStatement sstatement = StatementDigest.sqlSimpleStatementParse(sqlStatement);
         log.info("解析sql:{}", sstatement.getInstruction().getType().name());
     }
 
     @Test
     public void testParseRollbackSQL() {
         // com.alibaba.druid.sql.ast.statement.SQLRollbackStatement
+        // sql:com.alibaba.druid.sql.dialect.sqlserver.ast.stmt.SQLServerRollbackStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("rollback TRANSACTION xxx;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
 
@@ -413,6 +410,14 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLDropIndexStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("ALTER TABLE db.tb DROP COLUMN col1,col2;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
+    }
+
+    @Test
+    public void testDeleteSQL() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE name='Facebook' AND country='USA';", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
     }
 
     @Test

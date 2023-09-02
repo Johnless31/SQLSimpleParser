@@ -1,5 +1,6 @@
 package sql.simple.parser.digest.global;
 
+import com.alibaba.druid.sql.ast.statement.SQLGrantStatement;
 import sql.simple.parser.digest.enums.AlterInstructionType;
 
 import java.util.HashMap;
@@ -7,42 +8,64 @@ import java.util.Map;
 
 public class StaticObjMap {
 
-    public static Map<String, Integer> statementMap = new HashMap<>();
+    /*public static Map<String, Integer> statementMap = new HashMap<>();
 
     static {
         // DCL Statement 1~1000
         statementMap.put("SQLCommitStatement", 1);
+
         statementMap.put("SQLRollbackStatement", 2);
+
         statementMap.put("SQLServerRollbackStatement", 3);
+
         statementMap.put("SQLStartTransactionStatement", 4);
         statementMap.put("OscarStartTransactionStatement", 5);
         statementMap.put("PGStartTransactionStatement", 6);
+
         statementMap.put("MySqlSetTransactionStatement", 7);
+
         statementMap.put("SQLServerSetTransactionIsolationLevelStatement", 8);
+
         statementMap.put("OracleSetTransactionStatement", 9);
+
         statementMap.put("SQLSetStatement", 10);
+
         statementMap.put("SQLGrantStatement", 11);
-        statementMap.put("SQLRevokeStatement",12);
+        statementMap.put("OdpsGrantStmt", 12);
+
+        statementMap.put("SQLRevokeStatement",13);
 
         // DDL Statement 1001~3000
         statementMap.put("SQLCreateDatabaseStatement",1001);
+
         statementMap.put("SQLCreateTableStatement",1002);
-        statementMap.put("MySqlCreateTableStatement",1003);
+        statementMap.put("MySqlCreateTableStatement",1030);
         statementMap.put("OracleCreateTableStatement",1004);
+
         statementMap.put("SQLCreateIndexStatement",1005);
         statementMap.put("OracleCreateIndexStatement",1006);
+
         statementMap.put("SQLCreateViewStatement",1007);
+
         statementMap.put("SQLCreateProcedureStatement", 1008);
+
         statementMap.put("SQLDropDatabaseStatement", 1009);
+
         statementMap.put("SQLDropTableStatement", 1010);
+
         statementMap.put("SQLDropViewStatement", 1011);
+
         statementMap.put("SQLDropIndexStatement", 1012);
+
         statementMap.put("SQLAlterTableStatement",1013);
+
         statementMap.put("SQLAlterDatabaseStatement",1014);
+
+
 
         // DML Statement 3001~Max
         statementMap.put("SQLSelectStatement",3001);
-    }
+    }*/
 
     public static Map<String, AlterInstructionType> alterItemMap = new HashMap<>();
     static {
