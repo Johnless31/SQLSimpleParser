@@ -4,7 +4,7 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 
 import lombok.extern.slf4j.Slf4j;
 import sql.simple.parser.digest.handler.DigestHandler;
-import sql.simple.parser.digest.global.StatementInsMap;
+import sql.simple.parser.digest.global.StaticObjMap;
 
 @Slf4j
 public class StatementDigest {
@@ -14,7 +14,7 @@ public class StatementDigest {
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
         if (statement != null) {
             String insName = statement.getClass().getSimpleName();
-            Integer insCode = StatementInsMap.statementMap.get(insName);
+            Integer insCode = StaticObjMap.statementMap.get(insName);
             switch (insCode) {
                 case 1:{
                     DigestHandler.SQLCommitHandler(sqlSimpleStatement);

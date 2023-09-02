@@ -1,12 +1,11 @@
 package sql.simple.parser.digest.global;
 
-import com.alibaba.druid.sql.ast.statement.SQLAlterDatabaseStatement;
 import sql.simple.parser.digest.enums.AlterInstructionType;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class StatementInsMap {
+public class StaticObjMap {
 
     public static Map<String, Integer> statementMap = new HashMap<>();
 
