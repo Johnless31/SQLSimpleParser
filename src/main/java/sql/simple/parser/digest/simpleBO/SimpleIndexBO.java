@@ -1,9 +1,9 @@
-package sql.simple.parser.digest.res;
+package sql.simple.parser.digest.simpleBO;
 
 import lombok.Data;
 
 @Data
-public class SQLSimpleIndex {
+public class SimpleIndexBO {
 
     private String type;
     private String name;

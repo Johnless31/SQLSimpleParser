@@ -1,7 +1,6 @@
 package sql.simple.parser.digest;
 
 import lombok.Data;
-import sql.simple.parser.digest.res.*;
 import sql.simple.parser.digest.simpleBO.*;
 
 import java.util.ArrayList;

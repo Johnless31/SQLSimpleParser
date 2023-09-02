@@ -3,8 +3,6 @@ package sql.simple.parser.digest.simpleBO;
 import lombok.Data;
 import sql.simple.parser.digest.common.vlo.ColumnDefVLO;
 import sql.simple.parser.digest.common.vlo.TableVLO;
-import sql.simple.parser.digest.res.SQLSimpleIndex;
-
 import java.util.ArrayList;
 import java.util.List;
 

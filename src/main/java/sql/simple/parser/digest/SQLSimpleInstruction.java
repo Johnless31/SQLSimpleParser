@@ -1,4 +1,4 @@
-package sql.simple.parser.digest.res;
+package sql.simple.parser.digest;
 
 import lombok.Data;
 import sql.simple.parser.digest.enums.InstructionType;
