@@ -13,7 +13,7 @@ import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import sql.simple.parser.digest.common.utils.ExtraUtils;
 import sql.simple.parser.digest.common.vlo.*;
-import sql.simple.parser.digest.enums.StatementInsMap;
+import sql.simple.parser.digest.global.StatementInsMap;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.enums.InstructionType;
 import sql.simple.parser.digest.simpleBO.*;

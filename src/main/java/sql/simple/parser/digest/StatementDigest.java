@@ -4,7 +4,7 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 
 import lombok.extern.slf4j.Slf4j;
 import sql.simple.parser.digest.handler.DigestHandler;
-import sql.simple.parser.digest.enums.StatementInsMap;
+import sql.simple.parser.digest.global.StatementInsMap;
 
 @Slf4j
 public class StatementDigest {

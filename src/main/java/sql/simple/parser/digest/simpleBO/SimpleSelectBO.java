@@ -3,9 +3,6 @@ package sql.simple.parser.digest.simpleBO;
 import lombok.Data;
 import sql.simple.parser.digest.common.vlo.ColumnVLO;
 import sql.simple.parser.digest.common.vlo.DbTblVLO;
-import sql.simple.parser.digest.enums.ConstantType;
-import sql.simple.parser.digest.enums.SelectItemType;
-import sql.simple.parser.digest.enums.SubqueryType;
 import sql.simple.parser.digest.common.vlo.TableVLO;
 
 import java.util.ArrayList;
@@ -14,9 +11,6 @@ import java.util.List;
 @Data
 public class SimpleSelectBO {
 
-    /*private SelectItemType selectItemType = SelectItemType.UNKNOWN;
-    private ConstantType constantType = ConstantType.UNKNOWN;
-    private SubqueryType subqueryType = SubqueryType.UNKNOWN;*/
     private String database;
     private String tableView;
     private String column;
