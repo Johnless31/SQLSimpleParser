@@ -1,10 +1,8 @@
 package sql.simple.parser.digest.handler;
 
 import com.alibaba.druid.sql.ast.SQLIndexDefinition;
-import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
-import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
 import com.alibaba.druid.sql.ast.expr.SQLQueryExpr;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSetTransactionStatement;
@@ -327,8 +325,14 @@ public class DigestHandler {
         }
     }
 
+    /**
+     * 先处理from子句，再处理select columns子句
+     * @param sqlSelectQuery
+     * @param simpleSelectBOList
+     */
     private static void SQLSelectQueryHandler(SQLSelectQuery sqlSelectQuery, List<SimpleSelectBO> simpleSelectBOList) {
         if (sqlSelectQuery instanceof SQLSelectQueryBlock selectQueryBlock) {
+            // 1、正常查表的情况
             if (selectQueryBlock.getFrom() instanceof SQLExprTableSource tableSource) {
                 TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
                 List<ColumnVLO> columnVLOList = new ArrayList<>();
@@ -338,7 +342,7 @@ public class DigestHandler {
                             SQLSelectQueryHandler(sqlQueryExpr.getSubQuery().getQuery(), simpleSelectBOList);
                         }
                     } else {
-                        List<ColumnVLO> tmpList = ExtraUtils.extraColumnFromSQLSelectItem(item);
+                        List<ColumnVLO> tmpList = ExtraUtils.extraColumnVLOFromSQLSelectItem(item);
                         columnVLOList.addAll(tmpList);
                     }
                 }
@@ -348,38 +352,43 @@ public class DigestHandler {
                     simpleSelectBO.transColumnVLO(col);
                     simpleSelectBOList.add(simpleSelectBO);
                 }
+            // 2、子查询的情况
             } else if (selectQueryBlock.getFrom() instanceof SQLSubqueryTableSource subqueryTableSource) {
                 if (subqueryTableSource.getSelect() != null && subqueryTableSource.getSelect().getQuery() != null) {
                     SQLSelectQueryHandler(subqueryTableSource.getSelect().getQuery(), simpleSelectBOList);
                 }
+            // 3、join表查询的情况
             } else if (selectQueryBlock.getFrom() instanceof SQLJoinTableSource joinTableSource) {
                 List<SQLExprTableSource> exprTableSourceList = new ArrayList<>();
                 List<SQLSubqueryTableSource> subqueryTableSourceList = new ArrayList<>();
+                // 将"from xx表"和"from子查询" 分开处理
                 breakSQLJoinTableSource(exprTableSourceList, subqueryTableSourceList, joinTableSource);
-                // 处理exprTS
-                List<TableVLO> tableVLOList = new ArrayList<>();
-                for (SQLExprTableSource exprTS: exprTableSourceList ) {
-                    TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(exprTS);
-                    tableVLOList.add(tableVLO);
-                }
-                List<ColumnVLO> columnVLOList = new ArrayList<>();
-                for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
-                    if (item.getExpr() instanceof SQLQueryExpr sqlQueryExpr) {
-                        if (sqlQueryExpr.getSubQuery() != null && sqlQueryExpr.getSubQuery().getQuery() != null) {
-                            SQLSelectQueryHandler(sqlQueryExpr.getSubQuery().getQuery(), simpleSelectBOList);
+                // 处理"from xx表"，即对exprTableSourceList进行处理
+                {
+                    List<TableVLO> tableVLOList = new ArrayList<>();
+                    for (SQLExprTableSource exprTS: exprTableSourceList ) {
+                        TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(exprTS);
+                        tableVLOList.add(tableVLO);
+                    }
+                    List<ColumnVLO> columnVLOList = new ArrayList<>();
+                    for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
+                        if (item.getExpr() instanceof SQLQueryExpr sqlQueryExpr) {
+                            if (sqlQueryExpr.getSubQuery() != null && sqlQueryExpr.getSubQuery().getQuery() != null) {
+                                SQLSelectQueryHandler(sqlQueryExpr.getSubQuery().getQuery(), simpleSelectBOList);
+                            }
+                        } else {
+                            List<ColumnVLO> tmpList = ExtraUtils.extraColumnVLOFromSQLSelectItem(item);
+                            columnVLOList.addAll(tmpList);
                         }
-                    } else {
-                        List<ColumnVLO> tmpList = ExtraUtils.extraColumnFromSQLSelectItem(item);
-                        columnVLOList.addAll(tmpList);
+                    }
+                    refineColumnVLO(columnVLOList, tableVLOList);
+                    for (ColumnVLO col: columnVLOList) {
+                        SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
+                        simpleSelectBO.transColumnVLO(col);
+                        simpleSelectBOList.add(simpleSelectBO);
                     }
                 }
-                refineColumnVLO(columnVLOList, tableVLOList);
-                for (ColumnVLO col: columnVLOList) {
-                    SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
-                    simpleSelectBO.transColumnVLO(col);
-                    simpleSelectBOList.add(simpleSelectBO);
-                }
-                // 处理subqueryList
+                // 处理"from子查询" ，subqueryTableSourceList
                 for (SQLSubqueryTableSource subqueryTS: subqueryTableSourceList) {
                     SQLSelectQueryHandler(subqueryTS.getSelect().getQuery(), simpleSelectBOList);
                 }

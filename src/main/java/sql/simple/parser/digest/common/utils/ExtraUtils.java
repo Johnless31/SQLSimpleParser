@@ -102,7 +102,7 @@ public class ExtraUtils {
      * @param itemList
      * @return
      */
-    public static List<ColumnVLO> extraColumnFromSQLSelectItem(List<SQLSelectItem> itemList) {
+    public static List<ColumnVLO> extraColumnVLOFromSQLSelectItem(List<SQLSelectItem> itemList) {
         List<ColumnVLO> colList = new ArrayList<>();
         for (SQLSelectItem item: itemList) {
             List<SQLExprVLO> exprVLOList = new ArrayList<>();
@@ -117,7 +117,7 @@ public class ExtraUtils {
         return colList;
     }
 
-    public static List<ColumnVLO> extraColumnFromSQLSelectItem(SQLSelectItem item) {
+    public static List<ColumnVLO> extraColumnVLOFromSQLSelectItem(SQLSelectItem item) {
         List<ColumnVLO> colList = new ArrayList<>();
         List<SQLExprVLO> exprVLOList = new ArrayList<>();
         extraExprVLOFromSQLExpr(exprVLOList, item.getExpr());
