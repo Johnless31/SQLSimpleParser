@@ -7,23 +7,33 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
+import com.alibaba.druid.sql.ast.expr.SQLQueryExpr;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlUserName;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.sqlserver.ast.stmt.SQLServerRollbackStatement;
 import com.alibaba.druid.sql.dialect.sqlserver.ast.stmt.SQLServerSetTransactionIsolationLevelStatement;
+import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import sql.simple.parser.digest.common.utils.ExtraUtils;
+import sql.simple.parser.digest.common.vlo.ColumnVLO;
+import sql.simple.parser.digest.common.vlo.DbTblVLO;
+import sql.simple.parser.digest.common.vlo.SQLExprVLO;
 import sql.simple.parser.digest.enums.StatementInsMap;
 import sql.simple.parser.digest.res.*;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.enums.InstructionType;
+import sql.simple.parser.digest.common.vlo.TableVLO;
+import sql.simple.parser.digest.simpleBO.SimpleSelectBO;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
-public class DCLDigestHandler {
+public class DigestHandler {
 
 
     private static void extraDBTBLFromSQLExprTableSource(SQLSimpleStatement sqlSimpleStatement, SQLExprTableSource table) {
@@ -301,9 +311,9 @@ public class DCLDigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.DROP_VIEW);
         SQLDropViewStatement realStatement = (SQLDropViewStatement) statement;
         for (SQLExprTableSource tableSource: realStatement.getTableSources()) {
-            SQLSimpleDBTBLCOL dbtblcol = new SQLSimpleDBTBLCOL();
-            extraDBTBLFromSQLExprTableSource(dbtblcol.getDatabase(), dbtblcol.getTableView(), tableSource);
-            sqlSimpleStatement.getRefMultiRes().add(dbtblcol);
+            SQLSimpleDBTBLCOL dbTblCol = new SQLSimpleDBTBLCOL();
+            extraDBTBLFromSQLExprTableSource(dbTblCol.getDatabase(), dbTblCol.getTableView(), tableSource);
+            sqlSimpleStatement.getRefMultiRes().add(dbTblCol);
         }
     }
 
@@ -324,6 +334,136 @@ public class DCLDigestHandler {
                 sqlSimpleDBTBLCOL.setSubInstructionType(StatementInsMap.alterItemMap.get(insName));
                 sqlSimpleStatement.getRefMultiRes().add(sqlSimpleDBTBLCOL);
             }
+        }
+    }
+
+    private static void refineColumnVLO(List<ColumnVLO> columnVLOS, TableVLO tableVLO) {
+        for (ColumnVLO col: columnVLOS) {
+            col.transTableVLO(tableVLO);
+        }
+    }
+    private static void refineColumnVLO(List<ColumnVLO> columnVLOS, List<TableVLO> tableVLOList) {
+        Map<String, TableVLO> alias2Tbl = new HashMap<>();
+        Map<String, TableVLO> tbl2Tbl = new HashMap<>();
+        for (TableVLO tbl: tableVLOList) {
+            if (!StringUtils.isEmpty(tbl.getAlias())) {
+                alias2Tbl.put(tbl.getAlias(), tbl);
+            }
+            if (!StringUtils.isEmpty(tbl.getTableView())) {
+                tbl2Tbl.put(tbl.getTableView(), tbl);
+            }
+        }
+        for (ColumnVLO col: columnVLOS) {
+            if (!StringUtils.isEmpty(col.getBelongTableView())) {
+                if (alias2Tbl.containsKey(col.getBelongTableView())) {
+                    col.transTableVLO(alias2Tbl.get(col.getBelongTableView()));
+                } else if (tbl2Tbl.containsKey(col.getBelongTableView())) {
+                    col.transTableVLO(tbl2Tbl.get(col.getBelongTableView()));
+                } else {
+                    col.setBelongDatabase(null);
+                    col.setBelongTableView(null);
+                    for (TableVLO tbl: tableVLOList) {
+                        col.getPossibleBelongDbTbl().add(new DbTblVLO(tbl));
+                    }
+                }
+            } else {
+                col.setBelongDatabase(null);
+                col.setBelongTableView(null);
+                for (TableVLO tbl: tableVLOList) {
+                    col.getPossibleBelongDbTbl().add(new DbTblVLO(tbl));
+                }
+            }
+        }
+
+    }
+
+    private static void breakSQLJoinTableSource(List<SQLExprTableSource> exprTableSourceList, List<SQLSubqueryTableSource> subqueryTableSourceList, SQLJoinTableSource joinTableSource) {
+        if (joinTableSource.getLeft() instanceof SQLExprTableSource exprTableSource) {
+            exprTableSourceList.add(exprTableSource);
+        } else if (joinTableSource.getLeft() instanceof SQLSubqueryTableSource subqueryTableSource) {
+            subqueryTableSourceList.add(subqueryTableSource);
+        } else if (joinTableSource.getLeft() instanceof SQLJoinTableSource leftJoinTableSource) {
+            breakSQLJoinTableSource(exprTableSourceList, subqueryTableSourceList, leftJoinTableSource);
+        }
+
+        if (joinTableSource.getRight() instanceof SQLExprTableSource exprTableSource) {
+            exprTableSourceList.add(exprTableSource);
+        } else if (joinTableSource.getRight() instanceof SQLSubqueryTableSource subqueryTableSource) {
+            subqueryTableSourceList.add(subqueryTableSource);
+        } else if (joinTableSource.getRight() instanceof SQLJoinTableSource leftJoinTableSource) {
+            breakSQLJoinTableSource(exprTableSourceList, subqueryTableSourceList, leftJoinTableSource);
+        }
+    }
+
+    private static void SQLSelectQueryHandler(SQLSelectQuery sqlSelectQuery, List<SimpleSelectBO> simpleSelectBOList) {
+        if (sqlSelectQuery instanceof SQLSelectQueryBlock selectQueryBlock) {
+            if (selectQueryBlock.getFrom() instanceof SQLExprTableSource tableSource) {
+                TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
+                List<ColumnVLO> columnVLOList = new ArrayList<>();
+                for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
+                    if (item.getExpr() instanceof SQLQueryExpr sqlQueryExpr) {
+                        if (sqlQueryExpr.getSubQuery() != null && sqlQueryExpr.getSubQuery().getQuery() != null) {
+                            SQLSelectQueryHandler(sqlQueryExpr.getSubQuery().getQuery(), simpleSelectBOList);
+                        }
+                    } else {
+                        List<ColumnVLO> tmpList = ExtraUtils.extraColumnFromSQLSelectItem(item);
+                        columnVLOList.addAll(tmpList);
+                    }
+                }
+                refineColumnVLO(columnVLOList, tableVLO);
+                for (ColumnVLO col: columnVLOList) {
+                    SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
+                    simpleSelectBO.transColumnVLO(col);
+                    simpleSelectBOList.add(simpleSelectBO);
+                }
+            } else if (selectQueryBlock.getFrom() instanceof SQLSubqueryTableSource subqueryTableSource) {
+                if (subqueryTableSource.getSelect() != null && subqueryTableSource.getSelect().getQuery() != null) {
+                    SQLSelectQueryHandler(subqueryTableSource.getSelect().getQuery(), simpleSelectBOList);
+                }
+            } else if (selectQueryBlock.getFrom() instanceof SQLJoinTableSource joinTableSource) {
+                List<SQLExprTableSource> exprTableSourceList = new ArrayList<>();
+                List<SQLSubqueryTableSource> subqueryTableSourceList = new ArrayList<>();
+                breakSQLJoinTableSource(exprTableSourceList, subqueryTableSourceList, joinTableSource);
+                // 处理exprTS
+                List<TableVLO> tableVLOList = new ArrayList<>();
+                for (SQLExprTableSource exprTS: exprTableSourceList ) {
+                    TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(exprTS);
+                    tableVLOList.add(tableVLO);
+                }
+                List<ColumnVLO> columnVLOList = new ArrayList<>();
+                for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
+                    if (item.getExpr() instanceof SQLQueryExpr sqlQueryExpr) {
+                        if (sqlQueryExpr.getSubQuery() != null && sqlQueryExpr.getSubQuery().getQuery() != null) {
+                            SQLSelectQueryHandler(sqlQueryExpr.getSubQuery().getQuery(), simpleSelectBOList);
+                        }
+                    } else {
+                        List<ColumnVLO> tmpList = ExtraUtils.extraColumnFromSQLSelectItem(item);
+                        columnVLOList.addAll(tmpList);
+                    }
+                }
+                refineColumnVLO(columnVLOList, tableVLOList);
+                for (ColumnVLO col: columnVLOList) {
+                    SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
+                    simpleSelectBO.transColumnVLO(col);
+                    simpleSelectBOList.add(simpleSelectBO);
+                }
+                // 处理subqueryList
+                for (SQLSubqueryTableSource subqueryTS: subqueryTableSourceList) {
+                    SQLSelectQueryHandler(subqueryTS.getSelect().getQuery(), simpleSelectBOList);
+                }
+            }
+        } else if (sqlSelectQuery instanceof SQLUnionQuery unionQuery) {
+            for (SQLSelectQuery query: unionQuery.getRelations()) {
+                SQLSelectQueryHandler(query, simpleSelectBOList);
+            }
+        }
+    }
+
+    public static void SQLSelectStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.SELECT);
+        SQLSelectStatement realStatement = (SQLSelectStatement) statement;
+        if (realStatement.getSelect() != null && realStatement.getSelect().getQuery() != null) {
+            SQLSelectQueryHandler(realStatement.getSelect().getQuery(), sqlSimpleStatement.getSimpleSelectBOList());
         }
     }
 }

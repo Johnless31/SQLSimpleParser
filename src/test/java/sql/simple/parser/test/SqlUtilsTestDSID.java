@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import sql.simple.parser.digest.SQLSimpleStatement;
 import sql.simple.parser.digest.StatementDigest;
-import sql.simple.parser.digest.handler.DCLDigestHandler;
+import sql.simple.parser.digest.handler.DigestHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -212,7 +212,7 @@ public class SqlUtilsTestDSID {
                 ");", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -234,7 +234,7 @@ public class SqlUtilsTestDSID {
                 ");", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -245,7 +245,7 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("CREATE UNIQUE INDEX idx_age ON person (id,age);", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLCreateIndexHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLCreateIndexHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -255,7 +255,7 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("create view actor_name_view(fname, lname) as select first_name AS first_name_v, last_name as last_name_v from actor;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLCreateViewHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLCreateViewHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -293,7 +293,7 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("Drop table if exists db.u_tb, db2.stu;", DbType.oracle);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLDropTableHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLDropTableHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -311,7 +311,7 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("drop index if exists tt.test;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -321,7 +321,7 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("drop index test on kk.tt;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
-        DCLDigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
+        DigestHandler.SQLDropIndexHandler(sqlSimpleStatement, sqlStatement);
         log.info("解析sql:{}", sqlSimpleStatement.getClass().getName());
     }
 
@@ -362,26 +362,29 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT Tid,Tname FROM Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
     public void testSelectSQL1() {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
-        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT TC.Tid, TC.Tname FROM Teachers AS TC;", DbType.sqlserver);
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT TC.Tid, TC.Tname FROM db.Teachers AS TC;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
     public void testSelectSQL2() {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
-        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT Tid+100 AS \"新编号\", Tname AS \"身份\" FROM db.Teachers;", DbType.sqlserver);
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT 100+Tid+100 AS \"新编号\", Tname AS \"身份\" FROM db.Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -389,8 +392,9 @@ public class SqlUtilsTestDSID {
         //com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT * FROM Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -398,8 +402,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT 'xxx' AS string, 38 AS number, Tid,Tname FROM Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -407,8 +412,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT DISTINCT Tid,Tname FROM Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -417,8 +423,9 @@ public class SqlUtilsTestDSID {
         // count, sum, avg, max, min
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT MAX(DISTINCT sale_price), MIN(purchase_price) FROM Teachers;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -426,8 +433,9 @@ public class SqlUtilsTestDSID {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT  product_type, cnt_product FROM (SELECT product_type, COUNT(*) AS cnt_product FROM Product GROUP BY product_type) AS ProductSum;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -440,8 +448,9 @@ public class SqlUtilsTestDSID {
                 " GROUP BY product_type) AS ProductSum\n" +
                 " WHERE cnt_product = 4) AS ProductSum2;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -450,12 +459,13 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT product_id,\n" +
                 " product_name,\n" +
                 " sale_price,\n" +
-                " (SELECT AVG(sale_price)\n" +
-                " FROM Product) AS avg_price\n" +
+                " (SELECT AVG(sale_pos)\n" +
+                " FROM ProductPos) AS avg_price\n" +
                 " FROM Product;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -466,19 +476,21 @@ public class SqlUtilsTestDSID {
                 " WHERE sale_price > (SELECT AVG(sale_price)\n" +
                 " FROM Product);", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
     public void testSelectSQL11() {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT str1, str2,\n" +
-                " str1 || str2 AS str_concat\n" +
+                " str1 || str3 AS str_concat\n" +
                 " FROM SampleStr;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -490,8 +502,9 @@ public class SqlUtilsTestDSID {
                 " FROM ShopProduct\n" +
                 " WHERE shop_id = '000C');", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -503,8 +516,9 @@ public class SqlUtilsTestDSID {
                 "SELECT product_id, product_name\n" +
                 " FROM Product2;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
     @Test
     public void testSelectUnionSQL2() {
@@ -515,8 +529,9 @@ public class SqlUtilsTestDSID {
                 "SELECT product_id, product_name\n" +
                 " FROM Product2;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -555,8 +570,9 @@ public class SqlUtilsTestDSID {
                 " FROM ShopProduct AS SP INNER JOIN Product AS P \n" +
                 " ON SP.product_id = P.product_id;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -567,8 +583,9 @@ public class SqlUtilsTestDSID {
                 " FROM ShopProduct AS SP RIGHT OUTER JOIN Product AS P \n" +
                 " ON SP.product_id = P.product_id;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -579,8 +596,9 @@ public class SqlUtilsTestDSID {
                 " FROM Product AS P LEFT OUTER JOIN ShopProduct AS SP \n" +
                 " ON SP.product_id = P.product_id;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -594,8 +612,9 @@ public class SqlUtilsTestDSID {
                 " ON SP.product_id = IP.product_id\n" +
                 " WHERE IP.inventory_id = 'P001';", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -604,8 +623,19 @@ public class SqlUtilsTestDSID {
         SQLStatement sqlStatement = SQLUtils.parseSingleStatement("SELECT SP.shop_id, SP.shop_name, SP.product_id, P.product_name\n" +
                 " FROM ShopProduct AS SP CROSS JOIN Product AS P;", DbType.sqlserver);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
-        //SQLSelectQueryBlock selectQueryBlock = ((SQLSelectStatement) sqlStatement).getSelect().getQueryBlock();
-        //log.info("解析select list:{}", selectQueryBlock.getSelectList());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+    }
+
+    @Test
+    public void testSelectJoinSQL5() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select id, age, id_card, name from tb_role as r inner join (select id,age,id_card from tb_user) as u on r.user_id = u.id;;", DbType.sqlserver);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
     }
 
     @Test
@@ -616,5 +646,17 @@ public class SqlUtilsTestDSID {
             list.add(ii);
         }
         log.info("size:{}", list.size());
+    }
+
+    private String testStr(String cc) {
+        String str = cc;
+        log.info("str=:{}", str);
+        return str;
+    }
+    @Test
+    public void testString() {
+        String cc = "kkk";
+        String db = testStr(cc);
+        log.info("str=:{}", db);
     }
 }

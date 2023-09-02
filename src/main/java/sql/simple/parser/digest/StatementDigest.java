@@ -3,7 +3,7 @@ package sql.simple.parser.digest;
 import com.alibaba.druid.sql.ast.SQLStatement;
 
 import lombok.extern.slf4j.Slf4j;
-import sql.simple.parser.digest.handler.DCLDigestHandler;
+import sql.simple.parser.digest.handler.DigestHandler;
 import sql.simple.parser.digest.enums.StatementInsMap;
 
 @Slf4j
@@ -17,88 +17,88 @@ public class StatementDigest {
             Integer insCode = StatementInsMap.statementMap.get(insName);
             switch (insCode) {
                 case 1:{
-                    DCLDigestHandler.SQLCommitHandler(sqlSimpleStatement);
+                    DigestHandler.SQLCommitHandler(sqlSimpleStatement);
                     break;
                 }
                 case 2: {
-                    DCLDigestHandler.SQLRollbackHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLRollbackHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 3: {
-                    DCLDigestHandler.SQLServerRollbackHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLServerRollbackHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 4:
                 case 5:
                 case 6: {
-                    DCLDigestHandler.SQLStarTransactionHandler (sqlSimpleStatement);
+                    DigestHandler.SQLStarTransactionHandler (sqlSimpleStatement);
                     break;
                 }
                 case 7: {
-                    DCLDigestHandler.MySqlSetTransactionHandler (sqlSimpleStatement, statement);
+                    DigestHandler.MySqlSetTransactionHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 8: {
-                    DCLDigestHandler.SQLServerSetTransactionIsolationLevelHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLServerSetTransactionIsolationLevelHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 9: {
-                    DCLDigestHandler.OracleSetTransactionlHandler (sqlSimpleStatement, statement);
+                    DigestHandler.OracleSetTransactionlHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 10: {
-                    DCLDigestHandler.SQLSetHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLSetHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 11: {
-                    DCLDigestHandler.SQLGrantHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLGrantHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 12: {
-                    DCLDigestHandler.SQLRevokeHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLRevokeHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 13: {
-                    DCLDigestHandler.SQLCreateDatabaseHandler (sqlSimpleStatement, statement);
+                    DigestHandler.SQLCreateDatabaseHandler (sqlSimpleStatement, statement);
                     break;
                 }
                 case 14:
                 case 15:
                 case 16: {
-                    DCLDigestHandler.SQLCreateTableHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 17:
                 case 18: {
-                    DCLDigestHandler.SQLCreateIndexHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLCreateIndexHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 19: {
-                    DCLDigestHandler.SQLCreateViewHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLCreateViewHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 20: {
-                    DCLDigestHandler.SQLCreateProcedureHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLCreateProcedureHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 21: {
-                    DCLDigestHandler.SQLDropDatabaseHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLDropDatabaseHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 22: {
-                    DCLDigestHandler.SQLDropTableHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLDropTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 23: {
-                    DCLDigestHandler.SQLDropViewHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLDropViewHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 24: {
-                    DCLDigestHandler.SQLDropIndexHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLDropIndexHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 case 25: {
-                    DCLDigestHandler.SQLAlterTableHandler(sqlSimpleStatement, statement);
+                    DigestHandler.SQLAlterTableHandler(sqlSimpleStatement, statement);
                     break;
                 }
                 default: break;
