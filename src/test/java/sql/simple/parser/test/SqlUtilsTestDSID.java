@@ -415,7 +415,47 @@ public class SqlUtilsTestDSID {
     @Test
     public void testDeleteSQL() {
         // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
-        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE name='Facebook' AND country='USA';", DbType.oracle);
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE 'Facebook'=name AND country='USA';", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
+    }
+
+    @Test
+    public void testDeleteSQL2() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE name like '%Facebook' AND country='USA';", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
+    }
+
+    @Test
+    public void testDeleteSQL3() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE name is null;", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
+    }
+
+    @Test
+    public void testDeleteSQL4() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE id in (1,2,3);", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
+    }
+
+    @Test
+    public void testDeleteSQL5() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Websites WHERE id between 100 and 300;", DbType.oracle);
+        SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
+        log.info("解析sql:{}", deleteStatement.getTableSource());
+    }
+
+    @Test
+    public void testDeleteSQL6() {
+        // com.alibaba.druid.sql.ast.statement.SQLDeleteStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("DELETE FROM Product AS P WHERE EXISTS (SELECT * FROM ShopProduct AS SP WHERE SP.shop_id = '000C' AND SP.product_id = P.product_id);", DbType.mysql);
         SQLDeleteStatement deleteStatement = (SQLDeleteStatement) sqlStatement;
         log.info("解析sql:{}", deleteStatement.getTableSource());
     }
