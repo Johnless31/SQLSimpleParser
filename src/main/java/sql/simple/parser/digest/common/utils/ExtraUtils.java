@@ -140,6 +140,8 @@ public class ExtraUtils {
             sqlExprVLO.setName(propertyExpr.getName());
         } else if (sqlExpr instanceof SQLIdentifierExpr identifierExpr) {
             sqlExprVLO.setName(identifierExpr.getName());
+        } else if (sqlExpr instanceof SQLVariantRefExpr variantRefExpr) {
+            sqlExprVLO.setName(variantRefExpr.getName());
         }
         return sqlExprVLO;
     }

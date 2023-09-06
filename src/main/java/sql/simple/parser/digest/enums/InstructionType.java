@@ -22,4 +22,10 @@ public enum InstructionType {
     ALTER_TABLE,
     SELECT,
     DELETE,
+    EXPLAIN,
+    DESCRIBE,
+    EXPLAIN_ANALYZE,
+    SHOW,
+    PURGE_LOGS,
+    FLUSH,
 }

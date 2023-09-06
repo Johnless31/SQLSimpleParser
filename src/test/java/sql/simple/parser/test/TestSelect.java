@@ -483,4 +483,24 @@ public class TestSelect {
             }
         }
     }
+
+    @Test
+    public void testSelectAtSQL() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select @@max_allowed_packet;", DbType.mysql);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+    }
+
+    @Test
+    public void testSelectVDollarSQL2() {
+        // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select b.name,sum(a.bytes/1000000) 总空间 from v$datafile a,v$tablespace b where a.ts#=b.ts# group by b.name;", DbType.mysql);
+        log.info("解析sql:{}", sqlStatement.getClass().getName());
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement);
+    }
 }

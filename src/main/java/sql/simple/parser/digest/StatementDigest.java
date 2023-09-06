@@ -3,6 +3,7 @@ package sql.simple.parser.digest;
 import com.alibaba.druid.sql.ast.SQLStatement;
 
 import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlFlushStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSetTransactionStatement;
 import com.alibaba.druid.sql.dialect.oscar.ast.stmt.OscarStartTransactionStatement;
@@ -44,9 +45,12 @@ public class StatementDigest {
         } else if (statement instanceof SQLCommitStatement) {
             DigestHandler.SQLCommitHandler(sqlSimpleStatement);
         } else if (statement instanceof SQLRollbackStatement) {
-            DigestHandler.SQLRollbackHandler (sqlSimpleStatement, statement);
-        } else if (statement instanceof SQLServerRollbackStatement) {
-            DigestHandler.SQLServerRollbackHandler (sqlSimpleStatement, statement);
+            if (statement instanceof SQLServerRollbackStatement) {
+                DigestHandler.SQLServerRollbackHandler (sqlSimpleStatement, statement);
+            } else {
+                DigestHandler.SQLRollbackHandler (sqlSimpleStatement, statement);
+
+            }
         } else if (statement instanceof SQLStartTransactionStatement
                 || statement instanceof OscarStartTransactionStatement
                 || statement instanceof PGStartTransactionStatement) {
@@ -63,7 +67,22 @@ public class StatementDigest {
             DigestHandler.SQLGrantHandler (sqlSimpleStatement, statement);
         } else if (statement instanceof SQLRevokeStatement) {
             DigestHandler.SQLRevokeHandler (sqlSimpleStatement, statement);
+        } else if (statement instanceof  SQLDeleteStatement) {
+            DigestHandler.SQLDeleteStatementHandler (sqlSimpleStatement, statement);
+        } else if (statement instanceof SQLExplainStatement) {
+            DigestHandler.SQLExplainStatementHandler(sqlSimpleStatement, statement);
+        } else if (statement instanceof SQLDescribeStatement) {
+            DigestHandler.SQLDescribeStatementHandler(sqlSimpleStatement, statement);
+        } else if (statement instanceof SQLExplainAnalyzeStatement) {
+            DigestHandler.SQLExplainAnalyzeStatementHandler(sqlSimpleStatement, statement);
+        } else if (statement instanceof SQLShowStatement) {
+            DigestHandler.SQLShowStatementHandler(sqlSimpleStatement, statement);
+        } else if (statement instanceof SQLPurgeLogsStatement) {
+            DigestHandler.SQLPurgeLogStatementHandler(sqlSimpleStatement, statement);
+        } else if (statement instanceof MySqlFlushStatement) {
+            DigestHandler.MySqlFlushStatementHandler(sqlSimpleStatement, statement);
         }
+
         return sqlSimpleStatement;
     }
     /*

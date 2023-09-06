@@ -38,7 +38,7 @@ public class DigestHandler {
         try {
             SQLRollbackStatement realStatement = (SQLRollbackStatement) statement;
             SimpleAttributeBO attribute = new SimpleAttributeBO("SAVEPOINT", realStatement.getTo().getSimpleName());
-            sqlSimpleStatement.getAttributes().add(attribute);
+            sqlSimpleStatement.getAttributeBOList().add(attribute);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -51,7 +51,7 @@ public class DigestHandler {
             if (realStatement.getName() instanceof SQLIdentifierExpr identifierExpr) {
                 try {
                     SimpleAttributeBO attribute = new SimpleAttributeBO("SAVEPOINT", identifierExpr.getName());
-                    sqlSimpleStatement.getAttributes().add(attribute);
+                    sqlSimpleStatement.getAttributeBOList().add(attribute);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                 }
@@ -67,14 +67,14 @@ public class DigestHandler {
         sqlSimpleStatement.getInstruction().setType(InstructionType.SET_TRANSACTION);
         MySqlSetTransactionStatement realStatement = (MySqlSetTransactionStatement) statement;
         SimpleAttributeBO attribute = new SimpleAttributeBO("ISOLATION LEVEL", realStatement.getIsolationLevel());
-        sqlSimpleStatement.getAttributes().add(attribute);
+        sqlSimpleStatement.getAttributeBOList().add(attribute);
     }
 
     public static void SQLServerSetTransactionIsolationLevelHandler (SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
         sqlSimpleStatement.getInstruction().setType(InstructionType.SET_TRANSACTION);
         SQLServerSetTransactionIsolationLevelStatement realStatement = (SQLServerSetTransactionIsolationLevelStatement) statement;
         SimpleAttributeBO attribute = new SimpleAttributeBO("ISOLATION LEVEL", realStatement.getLevel());
-        sqlSimpleStatement.getAttributes().add(attribute);
+        sqlSimpleStatement.getAttributeBOList().add(attribute);
     }
 
     public static void OracleSetTransactionlHandler (SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
@@ -82,10 +82,10 @@ public class DigestHandler {
         OracleSetTransactionStatement realStatement = (OracleSetTransactionStatement) statement;
         if (realStatement.isReadOnly()) {
             SimpleAttributeBO attribute = new SimpleAttributeBO("READ ONLY", "TRUE");
-            sqlSimpleStatement.getAttributes().add(attribute);
+            sqlSimpleStatement.getAttributeBOList().add(attribute);
         } else if (realStatement.isWrite()) {
             SimpleAttributeBO attribute = new SimpleAttributeBO("READ WRITE", "TRUE");
-            sqlSimpleStatement.getAttributes().add(attribute);
+            sqlSimpleStatement.getAttributeBOList().add(attribute);
         }
     }
 
@@ -97,7 +97,7 @@ public class DigestHandler {
             if (item.getTarget() instanceof SQLIdentifierExpr target
                     && item.getValue() instanceof SQLIdentifierExpr value) {
                 SimpleAttributeBO attribute = new SimpleAttributeBO(target.getName(), value.getName());
-                sqlSimpleStatement.getAttributes().add(attribute);
+                sqlSimpleStatement.getAttributeBOList().add(attribute);
             }
         }
     }
@@ -394,6 +394,17 @@ public class DigestHandler {
                 for (SQLSubqueryTableSource subqueryTS: subqueryTableSourceList) {
                     SQLSelectQueryHandler(subqueryTS.getSelect().getQuery(), simpleSelectBOList);
                 }
+            } else if (selectQueryBlock.getFrom() == null) { // select @@version
+                List<ColumnVLO> columnVLOList = new ArrayList<>();
+                for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
+                    List<ColumnVLO> tmpList = ExtraUtils.extraColumnVLOFromSQLSelectItem(item);
+                    columnVLOList.addAll(tmpList);
+                }
+                for (ColumnVLO col: columnVLOList) {
+                    SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
+                    simpleSelectBO.transColumnVLO(col);
+                    simpleSelectBOList.add(simpleSelectBO);
+                }
             }
         } else if (sqlSelectQuery instanceof SQLUnionQuery unionQuery) {
             for (SQLSelectQuery query: unionQuery.getRelations()) {
@@ -444,5 +455,29 @@ public class DigestHandler {
             }
 
         }
+    }
+
+    public static void SQLExplainStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.EXPLAIN);
+    }
+
+    public static void SQLDescribeStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.DESCRIBE);
+    }
+
+    public static void SQLExplainAnalyzeStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.EXPLAIN_ANALYZE);
+    }
+
+    public static void SQLShowStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.SHOW);
+    }
+
+    public static void SQLPurgeLogStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.PURGE_LOGS);
+    }
+
+    public static void MySqlFlushStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.FLUSH);
     }
 }

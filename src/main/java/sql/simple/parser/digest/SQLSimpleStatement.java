@@ -16,7 +16,7 @@ public class SQLSimpleStatement {
     // SELECT
     private List<SimpleSelectBO> simpleSelectBOList = new ArrayList<>();
     // ROLLBACK, SET_TRANSACTION, SET
-    private List<SimpleAttributeBO> attributes = new ArrayList<>();
+    private List<SimpleAttributeBO> attributeBOList = new ArrayList<>();
     // GRANT, REVOKE
     private SimpleGrantBO simpleGrantBO = new SimpleGrantBO();
     // CREATE_DATABASE, CREATE_TABLE, CREATE_INDEX, DROP_DATABASE, DROP_INDEX
@@ -27,7 +27,7 @@ public class SQLSimpleStatement {
     private List<SimpleResourceBO> simpleDropTableViewBO = new ArrayList<>();
     // ALTER_TABLE
     private SimpleAlterBO simpleAlterBO = new SimpleAlterBO();
-
+    // DELETE
     private SimpleDeleteBO simpleDeleteBO = new SimpleDeleteBO();
 
 
