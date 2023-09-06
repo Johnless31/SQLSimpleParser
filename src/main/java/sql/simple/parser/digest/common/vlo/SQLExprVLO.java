@@ -1,5 +1,6 @@
 package sql.simple.parser.digest.common.vlo;
 
+import com.alibaba.druid.util.StringUtils;
 import lombok.Data;
 
 import java.util.Map;
@@ -13,5 +14,9 @@ public class SQLExprVLO {
         if (alias2Tbl.containsKey(owner)) {
             this.setOwner(alias2Tbl.get(owner));
         }
+    }
+
+    public boolean isValid() {
+        return !(StringUtils.isEmpty(owner) && StringUtils.isEmpty(this.name));
     }
 }

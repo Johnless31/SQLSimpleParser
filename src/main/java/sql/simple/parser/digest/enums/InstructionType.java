@@ -21,4 +21,5 @@ public enum InstructionType {
     ALTER_DATABASE,
     ALTER_TABLE,
     SELECT,
+    DELETE,
 }

@@ -9,6 +9,7 @@ import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import sql.simple.parser.digest.common.vlo.*;
 import sql.simple.parser.digest.common.vlo.ColumnDefVLO;
+import sql.simple.parser.digest.enums.ConditionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,26 +131,75 @@ public class ExtraUtils {
         return colList;
     }
 
-    public static void extraExprVLOFromSQLExpr(List<SQLExprVLO> exprVLOList, SQLExpr sqlExpr) {
+    public static SQLExprVLO extraExprVLOFromSQLExpr(SQLExpr sqlExpr) {
         SQLExprVLO sqlExprVLO = new SQLExprVLO();
         if (sqlExpr instanceof SQLAllColumnExpr allColumnExpr) {
             sqlExprVLO.setName("*");
-            exprVLOList.add(sqlExprVLO);
         } else if (sqlExpr instanceof SQLPropertyExpr propertyExpr) {
             sqlExprVLO.setOwner(propertyExpr.getOwnerName());
             sqlExprVLO.setName(propertyExpr.getName());
-            exprVLOList.add(sqlExprVLO);
         } else if (sqlExpr instanceof SQLIdentifierExpr identifierExpr) {
             sqlExprVLO.setName(identifierExpr.getName());
-            exprVLOList.add(sqlExprVLO);
-        } else if (sqlExpr instanceof SQLBinaryOpExpr binaryOpExpr) {
+        }
+        return sqlExprVLO;
+    }
+
+    public static void extraExprVLOFromSQLExpr(List<SQLExprVLO> exprVLOList, SQLExpr sqlExpr) {
+        if (sqlExpr instanceof SQLBinaryOpExpr binaryOpExpr) {
             extraExprVLOFromSQLExpr(exprVLOList, binaryOpExpr.getLeft());
             extraExprVLOFromSQLExpr(exprVLOList, binaryOpExpr.getRight());
         } else if (sqlExpr instanceof SQLAggregateExpr aggregateExpr) {
             for (SQLExpr arg: aggregateExpr.getArguments()) {
                 extraExprVLOFromSQLExpr(exprVLOList, arg);
             }
+        } else {
+            SQLExprVLO sqlExprVLO =  extraExprVLOFromSQLExpr(sqlExpr);
+            if (sqlExprVLO.isValid()) {
+                exprVLOList.add(sqlExprVLO);
+            }
         }
+    }
+
+    public static ConditionVLO extraConditionVLOFromSQLExpr(SQLExpr sqlExpr) {
+        ConditionVLO conditionVLO = new ConditionVLO();
+        if (sqlExpr instanceof SQLBinaryOpExpr binaryOpExpr) {
+            conditionVLO.setType(ConditionType.BINARY_OP);
+            List<SQLExprVLO> sqlExprVLOList = new ArrayList<>();
+            extraExprVLOFromSQLExpr(sqlExprVLOList, binaryOpExpr);
+            if (!sqlExprVLOList.isEmpty()) {
+                conditionVLO.setColumn(sqlExprVLOList.get(0).getName());
+            }
+            conditionVLO.setLeftStr(binaryOpExpr.getLeft().toString());
+            conditionVLO.setRightStr(binaryOpExpr.getRight().toString());
+            conditionVLO.setOperateStr(binaryOpExpr.getOperator().toString());
+        } else if (sqlExpr instanceof SQLInListExpr inListExpr) {
+            conditionVLO.setType(ConditionType.IN_LIST_OP);
+            SQLExpr expr = inListExpr.getExpr();
+            List<SQLExprVLO> sqlExprVLOList = new ArrayList<>();
+            extraExprVLOFromSQLExpr(sqlExprVLOList, expr);
+            if (!sqlExprVLOList.isEmpty()) {
+                conditionVLO.setColumn(sqlExprVLOList.get(0).getName());
+            }
+            conditionVLO.setLeftStr(expr.toString());
+            conditionVLO.setRightStr(inListExpr.getTargetList().toString());
+            conditionVLO.setOperateStr("In");
+        } else if (sqlExpr instanceof SQLBetweenExpr betweenExpr) {
+            conditionVLO.setType(ConditionType.BETWEEN_OP);
+            SQLExpr expr = betweenExpr.getTestExpr();
+            List<SQLExprVLO> sqlExprVLOList = new ArrayList<>();
+            extraExprVLOFromSQLExpr(sqlExprVLOList, expr);
+            if (!sqlExprVLOList.isEmpty()) {
+                conditionVLO.setColumn(sqlExprVLOList.get(0).getName());
+            }
+            conditionVLO.setLeftStr(expr.toString());
+            conditionVLO.setRightStr(betweenExpr.getBeginExpr().toString() + "," + betweenExpr.getEndExpr().toString());
+            conditionVLO.setOperateStr("Between");
+        } else if (sqlExpr instanceof SQLExistsExpr existsExpr) {
+            conditionVLO.setType(ConditionType.EXISTS_OP);
+            conditionVLO.setRightStr(existsExpr.getSubQuery().toString());
+            conditionVLO.setOperateStr("Exists");
+        }
+        return conditionVLO;
     }
 
     public static List<TableVLO> extraTableVloListFromSQLJoinTableSource(SQLJoinTableSource joinTableSource) {

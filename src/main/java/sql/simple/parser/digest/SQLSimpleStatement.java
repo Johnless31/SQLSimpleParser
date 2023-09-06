@@ -28,6 +28,8 @@ public class SQLSimpleStatement {
     // ALTER_TABLE
     private SimpleAlterBO simpleAlterBO = new SimpleAlterBO();
 
+    private SimpleDeleteBO simpleDeleteBO = new SimpleDeleteBO();
+
 
 
 }

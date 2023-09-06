@@ -1,7 +1,9 @@
 package sql.simple.parser.digest.handler;
 
+import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLQueryExpr;
 import com.alibaba.druid.sql.ast.statement.*;
@@ -405,6 +407,42 @@ public class DigestHandler {
         SQLSelectStatement realStatement = (SQLSelectStatement) statement;
         if (realStatement.getSelect() != null && realStatement.getSelect().getQuery() != null) {
             SQLSelectQueryHandler(realStatement.getSelect().getQuery(), sqlSimpleStatement.getSimpleSelectBOList());
+        }
+    }
+
+    private static void getSQLExprListFromWhereExpr(List<SQLExpr> sqlExprList,  SQLExpr whereExpr) {
+        if (whereExpr != null) {
+            if (whereExpr instanceof SQLBinaryOpExpr binaryOpExpr && ("AND".equals(binaryOpExpr.getOperator().getName()) || "OR".equals(binaryOpExpr.getOperator().getName()))) {
+                getSQLExprListFromWhereExpr(sqlExprList, binaryOpExpr.getLeft());
+                getSQLExprListFromWhereExpr(sqlExprList, binaryOpExpr.getRight());
+            } else {
+                sqlExprList.add(whereExpr);
+            }
+        }
+    }
+
+    public static List<SQLExpr> getSQLExprListFromWhereExpr(SQLExpr whereExpr) {
+        List<SQLExpr> sqlExprList = new ArrayList<>();
+        if (whereExpr != null) {
+            getSQLExprListFromWhereExpr(sqlExprList, whereExpr);
+        }
+        return sqlExprList;
+    }
+    public static void SQLDeleteStatementHandler(SQLSimpleStatement sqlSimpleStatement, SQLStatement statement) {
+        sqlSimpleStatement.getInstruction().setType(InstructionType.DELETE);
+        SQLDeleteStatement realStatement = (SQLDeleteStatement) statement;
+        SimpleDeleteBO deleteBO = sqlSimpleStatement.getSimpleDeleteBO();
+        if (realStatement.getTableSource() instanceof SQLExprTableSource tableSource) {
+            TableVLO tableVLO = ExtraUtils.extraTableVLOFromExprTableSource(tableSource);
+            deleteBO.transTableVLO(tableVLO);
+        }
+        if (realStatement.getWhere() != null) {
+            List<SQLExpr> sqlExprList = getSQLExprListFromWhereExpr(realStatement.getWhere());
+            for (SQLExpr expr : sqlExprList) {
+                ConditionVLO conditionVLO = ExtraUtils.extraConditionVLOFromSQLExpr(expr);
+                deleteBO.getConditionVLOS().add(conditionVLO);
+            }
+
         }
     }
 }
