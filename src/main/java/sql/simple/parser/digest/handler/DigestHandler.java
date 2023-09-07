@@ -394,16 +394,14 @@ public class DigestHandler {
                 for (SQLSubqueryTableSource subqueryTS: subqueryTableSourceList) {
                     SQLSelectQueryHandler(subqueryTS.getSelect().getQuery(), simpleSelectBOList);
                 }
-            } else if (selectQueryBlock.getFrom() == null) { // select @@version
-                List<ColumnVLO> columnVLOList = new ArrayList<>();
+            } else if (selectQueryBlock.getFrom() == null) { // select @@version, select SERVERPROPERTY('propertyname');"
                 for (SQLSelectItem item: selectQueryBlock.getSelectList()) {
-                    List<ColumnVLO> tmpList = ExtraUtils.extraColumnVLOFromSQLSelectItem(item);
-                    columnVLOList.addAll(tmpList);
-                }
-                for (ColumnVLO col: columnVLOList) {
+                    ColumnVLO columnVLO = new ColumnVLO();
+                    columnVLO.setColumn(item.toString());
                     SimpleSelectBO simpleSelectBO = new SimpleSelectBO();
-                    simpleSelectBO.transColumnVLO(col);
+                    simpleSelectBO.transColumnVLO(columnVLO);
                     simpleSelectBOList.add(simpleSelectBO);
+
                 }
             }
         } else if (sqlSelectQuery instanceof SQLUnionQuery unionQuery) {

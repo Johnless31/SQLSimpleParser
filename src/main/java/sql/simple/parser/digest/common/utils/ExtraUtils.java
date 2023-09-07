@@ -150,8 +150,8 @@ public class ExtraUtils {
         if (sqlExpr instanceof SQLBinaryOpExpr binaryOpExpr) {
             extraExprVLOFromSQLExpr(exprVLOList, binaryOpExpr.getLeft());
             extraExprVLOFromSQLExpr(exprVLOList, binaryOpExpr.getRight());
-        } else if (sqlExpr instanceof SQLAggregateExpr aggregateExpr) {
-            for (SQLExpr arg: aggregateExpr.getArguments()) {
+        } else if (sqlExpr instanceof SQLMethodInvokeExpr methodInvokeExpr) {
+            for (SQLExpr arg: methodInvokeExpr.getArguments()) {
                 extraExprVLOFromSQLExpr(exprVLOList, arg);
             }
         } else {
