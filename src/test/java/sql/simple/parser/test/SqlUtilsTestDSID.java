@@ -218,6 +218,33 @@ public class SqlUtilsTestDSID {
     }
 
     @Test
+    public void testCreateTB0SQL() {
+        String sql = "CREATE TABLE `dfs_metrics_device_oee` (\n" +
+                "  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '记录id',\n" +
+                "  `device_id` int(11) NOT NULL COMMENT '设备id',\n" +
+                "  `theoretical_speed` double(11,3) DEFAULT NULL COMMENT '理论生产速度',\n" +
+                "  `amount` double(11,3) DEFAULT NULL COMMENT '生产数量',\n" +
+                "  `unqualified` double(11,3) DEFAULT NULL COMMENT '不合格量',\n" +
+                "  `run_time` double(11,2) DEFAULT NULL COMMENT '开动时长（小时）',\n" +
+                "  `load_time` double(11,2) DEFAULT NULL COMMENT '负荷时长（小时）',\n" +
+                "  `yield` double(11,4) DEFAULT NULL COMMENT '合格率',\n" +
+                "  `performance` double(11,4) DEFAULT NULL COMMENT '性能开动率',\n" +
+                "  `time_efficiency` double(11,4) DEFAULT NULL COMMENT '时间开动率',\n" +
+                "  `oee` double(11,4) DEFAULT NULL COMMENT 'OEE',\n" +
+                "  `record_date` datetime DEFAULT NULL COMMENT '日期',\n" +
+                "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
+                "  `update_time` datetime DEFAULT NULL COMMENT '修改时间',\n" +
+                "  PRIMARY KEY (`id`) USING BTREE,\n" +
+                "  KEY `create_time` (`create_time`) USING BTREE,\n" +
+                "  KEY `id_record_date` (`device_id`,`record_date`) USING BTREE\n" +
+                ") ENGINE=InnoDB AUTO_INCREMENT=5966 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='设备每天OEE记录表';";
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement(sql, DbType.mysql);
+        SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
+        DigestHandler.SQLCreateTableHandler(sqlSimpleStatement, sqlStatement);
+        log.info("解析sql:{}", sqlSimpleStatement.getSimpleResourceBO());
+    }
+
+    @Test
     public void testCreateTBSQL() {
         // com.alibaba.druid.sql.ast.statement.SQLCreateTableStatement
         // com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleCreateTableStatement

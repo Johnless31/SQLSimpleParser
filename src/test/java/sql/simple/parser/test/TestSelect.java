@@ -497,7 +497,8 @@ public class TestSelect {
     @Test
     public void testSelectVDollarSQL2() {
         // com.alibaba.druid.sql.ast.statement.SQLSelectStatement
-        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select b.name,top(a.bytes/1000000) 总空间 from v$datafile a,v$tablespace b where a.ts#=b.ts# group by b.name;", DbType.sqlserver);
+        //SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select b.name,top(a.bytes/1000000) 总空间 from v$datafile a,v$tablespace b where a.ts#=b.ts# group by b.name;", DbType.sqlserver);
+        SQLStatement sqlStatement = SQLUtils.parseSingleStatement("select work_order_number from dfs_metrics_work_order where (unqualified_quantity/produce_quantity) > 0.2;", DbType.mysql);
         log.info("解析sql:{}", sqlStatement.getClass().getName());
         SQLSimpleStatement sqlSimpleStatement = new SQLSimpleStatement();
         DigestHandler.SQLSelectStatementHandler(sqlSimpleStatement, sqlStatement);
